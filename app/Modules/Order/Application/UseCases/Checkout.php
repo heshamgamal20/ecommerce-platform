@@ -6,6 +6,7 @@ use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\ValueObjects\CheckoutData;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
+use App\Modules\Order\Application\Services\CheckoutOrderService;
 use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Application\UseCases\CreatePayment;
 use App\Modules\Payment\Domain\ValueObjects\PaymentData;
@@ -17,6 +18,7 @@ final class Checkout
     public function __construct(
         private readonly AuthenticationServiceInterface $authentication,
         private readonly OrderRepositoryInterface $orders,
+        private readonly CheckoutOrderService $checkoutOrders,
         private readonly TransactionManagerInterface $transactions,
         private readonly CreateShipment $createShipment,
         private readonly CreatePayment $createPayment,
@@ -35,8 +37,8 @@ final class Checkout
         // database rollback cannot undo a successful external charge.
         $order = $this->transactions->run(function () use ($data, $user): object {
             $order = $user === null
-                ? $this->orders->checkoutGuest($data->guestItems, $data->guestDetails, $data->currency, $data->idempotencyKey, $data->couponCode)
-                : $this->orders->checkout($user->id, $data->addressId, $data->currency, $data->idempotencyKey, $data->couponCode);
+                ? $this->checkoutOrders->forGuest($data->guestItems, $data->guestDetails, $data->currency, $data->idempotencyKey, $data->couponCode)
+                : $this->checkoutOrders->forUser($user, $data->addressId, $data->currency, $data->idempotencyKey, $data->couponCode);
 
             if ($data->shippingMethodId !== null) {
                 $shipment = $this->createShipment->execute($order->id, new CreateShipmentData(
