@@ -11,7 +11,7 @@ final class PaymobWebhookVerifier implements PaymobWebhookVerifierInterface
     {
     }
 
-    public function verify(array $payload, string $providedHmac): bool
+    public function verify(array $payload, string $providedHmac = ''): bool
     {
         $secret = (string) $this->settings->value('paymob', 'hmac_secret', config('services.paymob.hmac_secret'));
         if ($secret === '' || $providedHmac === '') {
@@ -43,7 +43,6 @@ final class PaymobWebhookVerifier implements PaymobWebhookVerifierInterface
             'source_data.type' => $source['type'] ?? '',
             'success' => $object['success'] ?? '',
         ];
-        ksort($values);
         $calculated = hash_hmac('sha512', implode('', array_map(static fn ($value): string => is_bool($value) ? ($value ? 'true' : 'false') : (string) $value, $values)), $secret);
 
         return hash_equals(strtolower($calculated), strtolower($providedHmac));

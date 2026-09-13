@@ -24,6 +24,10 @@ final class PaymobGateway implements PaymentGatewayInterface
         $secretKey = (string) $this->settings->value('paymob', 'secret_key', config('services.paymob.secret_key'));
         $publicKey = (string) $this->settings->value('paymob', 'public_key', config('services.paymob.public_key'));
         $integrationIds = $this->settings->value('paymob', 'integration_ids', config('services.paymob.integration_ids', []));
+        if (is_string($integrationIds)) {
+            $integrationIds = array_values(array_filter(array_map('intval', explode(',', $integrationIds))));
+        }
+        $integrationIds = is_array($integrationIds) ? $integrationIds : [];
 
         if ($secretKey === '' || $publicKey === '' || $integrationIds === []) {
             throw new PaymentException('Paymob is not configured.');
@@ -65,6 +69,7 @@ final class PaymobGateway implements PaymentGatewayInterface
         if ($clientSecret === '' || $intentionId === null) {
             throw new PaymentException('Paymob returned an incomplete payment intention.');
         }
+        $baseUrl = rtrim((string) $this->settings->value('paymob', 'base_url', config('services.paymob.base_url')), '/');
 
         return [
             'status' => 'pending',
@@ -72,7 +77,7 @@ final class PaymobGateway implements PaymentGatewayInterface
             'metadata' => [
                 'provider' => 'paymob',
                 'client_secret' => $clientSecret,
-                'checkout_url' => rtrim((string) config('services.paymob.base_url'), '/') . '/unifiedcheckout/?publicKey=' . urlencode($publicKey) . '&clientSecret=' . urlencode($clientSecret),
+                'checkout_url' => $baseUrl . '/unifiedcheckout/?publicKey=' . urlencode($publicKey) . '&clientSecret=' . urlencode($clientSecret),
                 'idempotency_key' => $idempotencyKey,
             ],
         ];
