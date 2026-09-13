@@ -79,6 +79,40 @@ final class CheckoutApiTest extends TestCase
         $this->assertDatabaseHas('inventory_items', ['product_id' => $product->id, 'reserved' => 2]);
     }
 
+    public function test_guest_can_create_customer_account_during_checkout(): void
+    {
+        Setting::query()->create([
+            'group' => 'checkout', 'key' => 'checkout.require_authentication', 'value' => '0',
+            'type' => 'boolean', 'is_secret' => false, 'is_encrypted' => false,
+        ]);
+        $product = Product::query()->create([
+            'name' => 'Account Product', 'slug' => 'account-product',
+            'type' => 'simple', 'status' => 'active', 'price' => 900,
+        ]);
+        InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 2, 'reserved' => 0]);
+
+        $response = $this->postJson('/api/v1/customer/checkout', [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            'guest' => [
+                'name' => 'New Customer', 'email' => 'new@example.com', 'phone' => '01000000001',
+                'password' => 'secret123', 'password_confirmation' => 'secret123', 'create_account' => true,
+                'address_line1' => 'Street 1', 'city' => 'Cairo', 'country' => 'EG',
+            ],
+            'idempotency_key' => 'guest-account-checkout-1',
+            'payment_method' => 'cash_on_delivery',
+            'payment_idempotency_key' => 'guest-account-payment-1',
+        ]);
+
+        $response->assertCreated();
+        $user = User::query()->where('email', 'new@example.com')->firstOrFail();
+        $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseHas('customer_orders', [
+            'user_id' => $user->id, 'guest_email' => null, 'guest_phone' => null,
+        ]);
+        $this->assertDatabaseHas('customer_addresses', ['user_id' => $user->id, 'is_default' => true]);
+        $this->assertDatabaseHas('payments', ['user_id' => $user->id, 'status' => 'pending']);
+    }
+
     public function test_guest_checkout_is_rejected_by_default(): void
     {
         $this->postJson('/api/v1/customer/checkout', [])->assertUnauthorized();

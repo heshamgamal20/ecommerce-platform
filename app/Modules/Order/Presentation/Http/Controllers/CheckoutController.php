@@ -25,6 +25,8 @@ final class CheckoutController extends Controller
             couponCode: $data['coupon_code'] ?? null,
             guestItems: $data['items'] ?? [],
             guestDetails: $data['guest'] ?? [],
+            createAccount: (bool) ($data['guest']['create_account'] ?? false),
+            accountPassword: $data['guest']['password'] ?? null,
         ));
 
         return response()->json(['data' => $order], 201);

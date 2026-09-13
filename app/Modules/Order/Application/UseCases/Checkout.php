@@ -13,6 +13,7 @@ use App\Modules\Payment\Domain\ValueObjects\PaymentData;
 use App\Modules\Shipping\Application\UseCases\CreateShipment;
 use App\Modules\Shipping\Domain\ValueObjects\CreateShipmentData;
 use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterface;
+use App\Modules\Customer\Domain\Contracts\CustomerAccountServiceInterface;
 final class Checkout
 {
     public function __construct(
@@ -23,11 +24,13 @@ final class Checkout
         private readonly CreateShipment $createShipment,
         private readonly CreatePayment $createPayment,
         private readonly CustomerNotificationRepositoryInterface $notifications,
+        private readonly CustomerAccountServiceInterface $accounts,
     ) {}
 
     public function execute(CheckoutData $data): object
     {
         $user = $this->authentication->user();
+        $checkoutUser = $user;
         if ($user === null && $data->guestItems === []) {
             throw new AuthenticationException('Unauthenticated.');
         }
@@ -35,9 +38,15 @@ final class Checkout
         // Keep only local order, inventory, and shipment state in this
         // transaction. A remote gateway call must never run under it: a
         // database rollback cannot undo a successful external charge.
-        $order = $this->transactions->run(function () use ($data, $user): object {
+        $order = $this->transactions->run(function () use ($data, $user, &$checkoutUser): object {
+            if ($user === null && $data->createAccount) {
+                $accountDetails = $data->guestDetails;
+                $accountDetails['password'] = $data->accountPassword;
+                $checkoutUser = $this->accounts->createFromGuestData($accountDetails);
+            }
+
             $order = $user === null
-                ? $this->checkoutOrders->forGuest($data->guestItems, $data->guestDetails, $data->currency, $data->idempotencyKey, $data->couponCode)
+                ? $this->checkoutOrders->forGuest($data->guestItems, $data->guestDetails, $data->currency, $data->idempotencyKey, $data->couponCode, $checkoutUser?->id)
                 : $this->checkoutOrders->forUser($user, $data->addressId, $data->currency, $data->idempotencyKey, $data->couponCode);
 
             if ($data->shippingMethodId !== null) {
@@ -55,6 +64,10 @@ final class Checkout
             return $order;
         });
 
+        if ($user === null && $checkoutUser !== null) {
+            $this->authentication->login($checkoutUser);
+        }
+
         if ($data->paymentMethod !== null) {
             $this->createPayment->execute($order->id, new PaymentData(
                 method: $data->paymentMethod,
@@ -64,10 +77,10 @@ final class Checkout
             ));
         }
 
-        $result = $user === null ? $this->orders->find($order->id) : $this->orders->findForUser($user->id, $order->id);
-        if ($user !== null) {
+        $result = $checkoutUser === null ? $this->orders->find($order->id) : $this->orders->findForUser($checkoutUser->id, $order->id);
+        if ($checkoutUser !== null) {
             $this->notifications->createForUser(
-                (int) $user->id,
+                (int) $checkoutUser->id,
                 'order.created',
                 'Order received',
                 'Your order has been received and is being prepared.',

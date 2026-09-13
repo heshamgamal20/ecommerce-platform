@@ -48,6 +48,8 @@ final class CheckoutRequest extends FormRequest
             $rules['guest.state'] = ['nullable', 'string', 'max:120'];
             $rules['guest.postal_code'] = ['nullable', 'string', 'max:30'];
             $rules['guest.country'] = ['sometimes', 'string', 'size:2'];
+            $rules['guest.create_account'] = ['sometimes', 'boolean'];
+            $rules['guest.password'] = ['required_if:guest.create_account,true', 'nullable', 'string', 'min:8', 'max:72', 'confirmed'];
         } else {
             $rules['address_id'][] = 'required';
         }

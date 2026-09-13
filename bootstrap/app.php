@@ -37,6 +37,7 @@ use App\Modules\Shipping\Domain\Exceptions\ShipmentNotFoundException;
 use App\Modules\Shipping\Domain\Exceptions\InvalidShipmentTransitionException;
 use App\Modules\Customer\Domain\Exceptions\CartException;
 use App\Modules\Customer\Domain\Exceptions\CartItemNotFoundException;
+use App\Modules\Customer\Domain\Exceptions\CustomerAccountConflictException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -58,7 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
   $exceptions->render(function(DomainAuthorizationException|StaffActionNotAllowedException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],403);});
   $exceptions->render(function(BusinessRuleException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
   $exceptions->render(function(InsufficientStockException|InvalidStockAdjustmentException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
-  $exceptions->render(function(CheckoutException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
+  $exceptions->render(function(CheckoutException|CustomerAccountConflictException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
   $exceptions->render(function(PaymentAlreadyProcessedException|PaymentInProgressException|InvalidPaymentTransitionException|InvalidOrderStatusTransitionException|InvalidShipmentTransitionException|OrderActionNotAllowedException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
   $exceptions->render(function(PaymentAmountMismatchException|PaymentFailedException|InvalidShippingAddressException|ShippingException|CartException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
   $exceptions->render(function(PaymentException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});

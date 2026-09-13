@@ -8,6 +8,7 @@ use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterfac
 use App\Modules\Customer\Domain\Contracts\CustomerOrderRepositoryInterface;
 use App\Modules\Customer\Domain\Contracts\CustomerPreferencesRepositoryInterface;
 use App\Modules\Customer\Domain\Contracts\CustomerRepositoryInterface;
+use App\Modules\Customer\Domain\Contracts\CustomerAccountServiceInterface;
 use App\Modules\Customer\Domain\Contracts\WishlistRepositoryInterface;
 use App\Modules\Customer\Infrastructure\Console\MarkAbandonedCarts;
 use App\Modules\Customer\Infrastructure\Persistence\EloquentAddressRepository;
@@ -16,6 +17,7 @@ use App\Modules\Customer\Infrastructure\Persistence\EloquentCustomerNotification
 use App\Modules\Customer\Infrastructure\Persistence\EloquentCustomerOrderRepository;
 use App\Modules\Customer\Infrastructure\Persistence\EloquentCustomerPreferencesRepository;
 use App\Modules\Customer\Infrastructure\Persistence\EloquentCustomerRepository;
+use App\Modules\Customer\Infrastructure\Persistence\EloquentCustomerAccountService;
 use App\Modules\Customer\Infrastructure\Persistence\EloquentWishlistRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +25,7 @@ final class CustomerServiceProvider extends ServiceProvider
 {
     public array $bindings = [
         CustomerRepositoryInterface::class => EloquentCustomerRepository::class,
+        CustomerAccountServiceInterface::class => EloquentCustomerAccountService::class,
         AddressRepositoryInterface::class => EloquentAddressRepository::class,
         CartRepositoryInterface::class => EloquentCartRepository::class,
         CustomerOrderRepositoryInterface::class => EloquentCustomerOrderRepository::class,

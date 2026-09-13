@@ -46,7 +46,7 @@ final class CheckoutOrderService
         return $order;
     }
 
-    public function forGuest(array $input, array $details, string $currency, ?string $idempotencyKey, ?string $couponCode): object
+    public function forGuest(array $input, array $details, string $currency, ?string $idempotencyKey, ?string $couponCode, ?int $userId = null): object
     {
         $existing = $this->orders->findByIdempotencyKey($idempotencyKey);
         if ($existing !== null) return $existing;
@@ -57,7 +57,7 @@ final class CheckoutOrderService
             $lines[] = $this->line($product, $variant, (int) $item['quantity']);
         }
         $country = strtoupper((string) ($details['country'] ?? 'EG'));
-        return $this->makeOrder($lines, $currency, $idempotencyKey, $couponCode, null, [
+        return $this->makeOrder($lines, $currency, $idempotencyKey, $couponCode, $userId, [
             'recipient_name' => $details['name'], 'phone' => $details['phone'],
             'address_line1' => $details['address_line1'], 'address_line2' => $details['address_line2'] ?? null,
             'city' => $details['city'], 'state' => $details['state'] ?? null,
@@ -95,7 +95,7 @@ final class CheckoutOrderService
         $totals = $this->pricing->total($subtotal, $promotion['discount'], $tax['amount']);
         $cleanLines = $lines;
         return $this->orders->create([
-            'user_id' => $userId, 'guest_email' => $email, 'guest_phone' => $address['phone'], 'status' => 'pending',
+            'user_id' => $userId, 'guest_email' => $userId === null ? $email : null, 'guest_phone' => $userId === null ? $address['phone'] : null, 'status' => 'pending',
             'total_amount' => $totals['total'], 'subtotal_amount' => $totals['subtotal'],
             'discount_amount' => $totals['discount'], 'coupon_code' => $promotion['code'], 'tax_amount' => $tax['amount'],
             'tax_rate' => $tax['rate'], 'tax_rule_id' => $tax['rule_id'], 'shipping_amount' => $totals['shipping'], 'currency' => $currency,
