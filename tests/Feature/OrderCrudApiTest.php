@@ -23,7 +23,7 @@ final class OrderCrudApiTest extends TestCase
         $owned = CustomerOrder::query()->create(['user_id' => $customer->id, 'status' => 'pending', 'total_amount' => 100, 'currency' => 'EGP']);
         $foreign = CustomerOrder::query()->create(['user_id' => $other->id, 'status' => 'pending', 'total_amount' => 200, 'currency' => 'EGP']);
 
-        $this->actingAs($customer)->getJson('/api/v1/customer/orders')->assertOk()->assertJsonCount(1, 'data');
+        $this->actingAs($customer)->getJson('/api/v1/customer/orders')->assertOk()->assertJsonCount(1, 'data.data');
         $this->actingAs($customer)->getJson("/api/v1/customer/orders/{$owned->id}")->assertOk()->assertJsonPath('data.id', $owned->id);
         $this->actingAs($customer)->getJson("/api/v1/customer/orders/{$foreign->id}")->assertNotFound();
     }
