@@ -202,6 +202,39 @@ final class CheckoutApiTest extends TestCase
         $this->assertDatabaseCount('payments', 1);
     }
 
+    public function test_only_one_checkout_can_reserve_the_last_unit_of_stock(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $firstUser = $this->userWithRole('customer');
+        $secondUser = $this->userWithRole('customer');
+        $product = Product::query()->create([
+            'name' => 'Last Unit Product', 'slug' => 'last-unit-product',
+            'type' => 'simple', 'status' => 'active', 'price' => 500,
+        ]);
+        InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 1, 'reserved' => 0]);
+        foreach ([$firstUser, $secondUser] as $user) {
+            $address = CustomerAddress::query()->create([
+                'user_id' => $user->id, 'recipient_name' => 'Customer', 'phone' => '01000000000',
+                'address_line1' => 'Street 1', 'city' => 'Cairo', 'country' => 'EG', 'is_default' => true,
+            ]);
+            $cart = CustomerCart::query()->create(['user_id' => $user->id]);
+            $cart->items()->create(['product_id' => $product->id, 'quantity' => 1]);
+        }
+
+        $this->actingAs($firstUser)->postJson('/api/v1/customer/checkout', [
+            'address_id' => CustomerAddress::query()->where('user_id', $firstUser->id)->value('id'),
+            'idempotency_key' => 'last-unit-first',
+        ])->assertCreated();
+
+        $this->actingAs($secondUser)->postJson('/api/v1/customer/checkout', [
+            'address_id' => CustomerAddress::query()->where('user_id', $secondUser->id)->value('id'),
+            'idempotency_key' => 'last-unit-second',
+        ])->assertUnprocessable();
+
+        $this->assertDatabaseCount('customer_orders', 1);
+        $this->assertDatabaseHas('inventory_items', ['product_id' => $product->id, 'on_hand' => 1, 'reserved' => 1]);
+    }
+
     public function test_checkout_rolls_back_reservation_when_pricing_fails_before_order_creation(): void
     {
         $this->seed(RbacSeeder::class);

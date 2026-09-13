@@ -8,6 +8,8 @@ use App\Modules\Order\Domain\Contracts\PricingCalculatorInterface;
 use App\Modules\Order\Domain\Exceptions\CheckoutException;
 use App\Modules\Promotion\Domain\Contracts\CouponServiceInterface;
 use App\Modules\Tax\Domain\Contracts\TaxCalculatorInterface;
+use App\Modules\Shipping\Domain\Contracts\ShippingMethodRepositoryInterface;
+use App\Modules\Shipping\Domain\Exceptions\ShippingException;
 
 final class CheckoutOrderService
 {
@@ -18,9 +20,10 @@ final class CheckoutOrderService
         private readonly TaxCalculatorInterface $taxes,
         private readonly CheckoutProductReaderInterface $products,
         private readonly PricingCalculatorInterface $pricing,
+        private readonly ShippingMethodRepositoryInterface $shippingMethods,
     ) {}
 
-    public function forUser(object $user, int $addressId, string $currency, ?string $idempotencyKey, ?string $couponCode): object
+    public function forUser(object $user, int $addressId, string $currency, ?string $idempotencyKey, ?string $couponCode, int $shippingFee = 0): object
     {
         $existing = $this->orders->findByIdempotencyKey($idempotencyKey);
         if ($existing !== null) {
@@ -41,12 +44,12 @@ final class CheckoutOrderService
             'city' => $address->city, 'state' => $address->state, 'postal_code' => $address->postal_code,
             'country' => $address->country,
         ];
-        $order = $this->makeOrder($lines, $currency, $idempotencyKey, $couponCode, $user->id, $addressData);
+        $order = $this->makeOrder($lines, $currency, $idempotencyKey, $couponCode, $user->id, $addressData, null, $shippingFee);
         $user->cart?->items()->delete();
         return $order;
     }
 
-    public function forGuest(array $input, array $details, string $currency, ?string $idempotencyKey, ?string $couponCode, ?int $userId = null): object
+    public function forGuest(array $input, array $details, string $currency, ?string $idempotencyKey, ?string $couponCode, ?int $userId = null, int $shippingFee = 0): object
     {
         $existing = $this->orders->findByIdempotencyKey($idempotencyKey);
         if ($existing !== null) return $existing;
@@ -62,7 +65,16 @@ final class CheckoutOrderService
             'address_line1' => $details['address_line1'], 'address_line2' => $details['address_line2'] ?? null,
             'city' => $details['city'], 'state' => $details['state'] ?? null,
             'postal_code' => $details['postal_code'] ?? null, 'country' => $country,
-        ], $details['email'] ?? null);
+        ], $details['email'] ?? null, $shippingFee);
+    }
+
+    public function shippingFee(?int $shippingMethodId, string $currency): int
+    {
+        if ($shippingMethodId === null) return 0;
+        $method = $this->shippingMethods->find($shippingMethodId);
+        if (! $method->is_active) throw new ShippingException('Shipping method is inactive.');
+        if ($method->currency !== $currency) throw new ShippingException('Shipping currency does not match the order.');
+        return (int) $method->base_fee;
     }
 
     private function line(?object $product, ?object $variant, int $quantity): array
@@ -87,12 +99,12 @@ final class CheckoutOrderService
         )['total'];
     }
 
-    private function makeOrder(array $lines, string $currency, ?string $key, ?string $couponCode, ?int $userId, array $address, ?string $email = null): object
+    private function makeOrder(array $lines, string $currency, ?string $key, ?string $couponCode, ?int $userId, array $address, ?string $email = null, int $shippingFee = 0): object
     {
         $subtotal = $this->pricing->subtotal($lines);
         $promotion = $this->coupons->apply($couponCode, (int) ($userId ?? 0), $subtotal);
         $tax = $this->taxes->calculate($this->pricing->taxableSubtotal($subtotal, $promotion['discount']), (string) $address['country'], $address['state'] ?? null);
-        $totals = $this->pricing->total($subtotal, $promotion['discount'], $tax['amount']);
+        $totals = $this->pricing->total($subtotal, $promotion['discount'], $tax['amount'], $shippingFee);
         $cleanLines = $lines;
         return $this->orders->create([
             'user_id' => $userId, 'guest_email' => $userId === null ? $email : null, 'guest_phone' => $userId === null ? $address['phone'] : null, 'status' => 'pending',

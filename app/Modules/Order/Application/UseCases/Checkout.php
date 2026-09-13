@@ -38,7 +38,9 @@ final class Checkout
         // Keep only local order, inventory, and shipment state in this
         // transaction. A remote gateway call must never run under it: a
         // database rollback cannot undo a successful external charge.
-        $order = $this->transactions->run(function () use ($data, $user, &$checkoutUser): object {
+        $shippingFee = $this->checkoutOrders->shippingFee($data->shippingMethodId, $data->currency);
+
+        $order = $this->transactions->run(function () use ($data, $user, $shippingFee, &$checkoutUser): object {
             if ($user === null && $data->createAccount) {
                 $accountDetails = $data->guestDetails;
                 $accountDetails['password'] = $data->accountPassword;
@@ -46,19 +48,14 @@ final class Checkout
             }
 
             $order = $user === null
-                ? $this->checkoutOrders->forGuest($data->guestItems, $data->guestDetails, $data->currency, $data->idempotencyKey, $data->couponCode, $checkoutUser?->id)
-                : $this->checkoutOrders->forUser($user, $data->addressId, $data->currency, $data->idempotencyKey, $data->couponCode);
+                ? $this->checkoutOrders->forGuest($data->guestItems, $data->guestDetails, $data->currency, $data->idempotencyKey, $data->couponCode, $checkoutUser?->id, $shippingFee)
+                : $this->checkoutOrders->forUser($user, $data->addressId, $data->currency, $data->idempotencyKey, $data->couponCode, $shippingFee);
 
             if ($data->shippingMethodId !== null) {
                 $shipment = $this->createShipment->execute($order->id, new CreateShipmentData(
                     $data->shippingMethodId,
                     $data->shippingIdempotencyKey ?? $data->idempotencyKey ?? ('shipment-' . $order->id),
                 ));
-                if ((int) $order->shipping_amount === 0) {
-                    $fee = (int) $shipment->fee;
-                    $total = $this->checkoutOrders->totalWithShipping($order, $fee);
-                    $order = $this->orders->addShippingFee($order->id, $fee, $total);
-                }
             }
 
             return $order;
