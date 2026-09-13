@@ -5,6 +5,7 @@ namespace App\Modules\Payment\Application\UseCases;
 use App\Modules\Auth\Domain\Contracts\AuthenticationServiceInterface;
 use App\Modules\Auth\Domain\Exceptions\AuthenticationException;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
+use App\Modules\Order\Domain\Contracts\TransactionManagerInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentOperationRepositoryInterface;
@@ -27,6 +28,7 @@ final class CreatePayment
         private readonly OutboxEventRepositoryInterface $outbox,
         private readonly PaymentGatewayInterface $gateway,
         private readonly CustomerNotificationRepositoryInterface $notifications,
+        private readonly TransactionManagerInterface $transactions,
     ) {}
 
     public function execute(int $orderId, PaymentData $data): object
@@ -92,22 +94,34 @@ final class CreatePayment
         } catch (\Throwable $exception) {
             $this->operations->fail((int) $claim->payment->id, 'create', $exception->getMessage(), ! ($exception instanceof PaymentFailedException));
             $this->outbox->markFailed('payment:create:' . $data->idempotencyKey, $exception->getMessage());
-            $this->payments->updateStatus($claim->payment, $exception instanceof PaymentFailedException ? 'failed' : 'processing', [
-                'metadata' => [
-                    'failure' => $exception->getMessage(),
-                    'reconciliation_required' => ! ($exception instanceof PaymentFailedException),
-                ],
-            ]);
-            if ($exception instanceof PaymentFailedException && $claim->payment->user_id !== null) {
-                $this->notifications->createForUser(
-                    (int) $claim->payment->user_id,
-                    'payment.failed',
-                    'Payment failed',
-                    'Your payment could not be completed. Please try again.',
-                );
-            }
             if ($exception instanceof PaymentFailedException) {
-                $this->orders->cancel((int) $order->id);
+                // Payment becomes terminal only if order cancellation succeeds in
+                // the same local transaction, so inventory cannot be stranded.
+                $this->transactions->run(function () use ($claim, $order, $exception): void {
+                    $lockedPayment = $this->payments->findForUpdate((int) $claim->payment->id);
+                    $this->payments->updateStatus($lockedPayment, 'failed', [
+                        'metadata' => [
+                            'failure' => $exception->getMessage(),
+                            'reconciliation_required' => false,
+                        ],
+                    ]);
+                    $this->orders->cancel((int) $order->id);
+                });
+                if ($claim->payment->user_id !== null) {
+                    $this->notifications->createForUser(
+                        (int) $claim->payment->user_id,
+                        'payment.failed',
+                        'Payment failed',
+                        'Your payment could not be completed. Please try again.',
+                    );
+                }
+            } else {
+                $this->payments->updateStatus($claim->payment, 'processing', [
+                    'metadata' => [
+                        'failure' => $exception->getMessage(),
+                        'reconciliation_required' => true,
+                    ],
+                ]);
             }
             throw $exception;
         }
