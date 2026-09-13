@@ -46,7 +46,9 @@ final class Checkout
                     $data->shippingIdempotencyKey ?? $data->idempotencyKey ?? ('shipment-' . $order->id),
                 ));
                 if ((int) $order->shipping_amount === 0) {
-                    $order = $this->orders->addShippingFee($order->id, (int) $shipment->fee);
+                    $fee = (int) $shipment->fee;
+                    $total = $this->checkoutOrders->totalWithShipping($order, $fee);
+                    $order = $this->orders->addShippingFee($order->id, $fee, $total);
                 }
             }
 

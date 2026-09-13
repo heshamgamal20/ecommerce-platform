@@ -20,7 +20,7 @@ interface OrderRepositoryInterface
 
     public function cancel(int $orderId): object;
 
-    public function addShippingFee(int $orderId, int $fee): object;
+    public function addShippingFee(int $orderId, int $fee, int $total): object;
 
     public function markRefunded(int $orderId): object;
 }

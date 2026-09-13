@@ -4,6 +4,7 @@ namespace App\Modules\Order\Application\Services;
 use App\Modules\Catalog\Domain\Contracts\CheckoutProductReaderInterface;
 use App\Modules\Inventory\Domain\Contracts\InventoryRepositoryInterface;
 use App\Modules\Order\Domain\Contracts\CheckoutOrderWriterInterface;
+use App\Modules\Order\Domain\Contracts\PricingCalculatorInterface;
 use App\Modules\Order\Domain\Exceptions\CheckoutException;
 use App\Modules\Promotion\Domain\Contracts\CouponServiceInterface;
 use App\Modules\Tax\Domain\Contracts\TaxCalculatorInterface;
@@ -16,6 +17,7 @@ final class CheckoutOrderService
         private readonly CouponServiceInterface $coupons,
         private readonly TaxCalculatorInterface $taxes,
         private readonly CheckoutProductReaderInterface $products,
+        private readonly PricingCalculatorInterface $pricing,
     ) {}
 
     public function forUser(object $user, int $addressId, string $currency, ?string $idempotencyKey, ?string $couponCode): object
@@ -71,21 +73,32 @@ final class CheckoutOrderService
         $price = $variant?->price ?? $product->price;
         if ($price === null || $price < 0) throw CheckoutException::missingPrice($product->name);
         $this->inventory->reserve($product->id, $variant?->id, $quantity);
-        $total = $price * $quantity;
-        return ['product_id' => $product->id, 'variant_id' => $variant?->id, 'name' => $product->name, 'sku' => $variant?->sku, 'quantity' => $quantity, 'unit_price' => $price, 'discount_amount' => 0, 'tax_amount' => 0, 'total_amount' => $total, '__line_total' => $total];
+        $total = $this->pricing->lineTotal($price, $quantity);
+        return ['product_id' => $product->id, 'variant_id' => $variant?->id, 'name' => $product->name, 'sku' => $variant?->sku, 'quantity' => $quantity, 'unit_price' => $price, 'discount_amount' => 0, 'tax_amount' => 0, 'total_amount' => $total, ];
+    }
+
+    public function totalWithShipping(object $order, int $shipping): int
+    {
+        return $this->pricing->total(
+            (int) $order->subtotal_amount,
+            (int) $order->discount_amount,
+            (int) $order->tax_amount,
+            (int) $shipping,
+        )['total'];
     }
 
     private function makeOrder(array $lines, string $currency, ?string $key, ?string $couponCode, ?int $userId, array $address, ?string $email = null): object
     {
-        $subtotal = array_sum(array_column($lines, '__line_total'));
+        $subtotal = $this->pricing->subtotal($lines);
         $promotion = $this->coupons->apply($couponCode, (int) ($userId ?? 0), $subtotal);
-        $tax = $this->taxes->calculate($subtotal - $promotion['discount'], (string) $address['country'], $address['state'] ?? null);
-        $cleanLines = array_map(static function (array $line): array { unset($line['__line_total']); return $line; }, $lines);
+        $tax = $this->taxes->calculate($this->pricing->taxableSubtotal($subtotal, $promotion['discount']), (string) $address['country'], $address['state'] ?? null);
+        $totals = $this->pricing->total($subtotal, $promotion['discount'], $tax['amount']);
+        $cleanLines = $lines;
         return $this->orders->create([
             'user_id' => $userId, 'guest_email' => $email, 'guest_phone' => $address['phone'], 'status' => 'pending',
-            'total_amount' => $subtotal - $promotion['discount'] + $tax['amount'], 'subtotal_amount' => $subtotal,
-            'discount_amount' => $promotion['discount'], 'coupon_code' => $promotion['code'], 'tax_amount' => $tax['amount'],
-            'tax_rate' => $tax['rate'], 'tax_rule_id' => $tax['rule_id'], 'shipping_amount' => 0, 'currency' => $currency,
+            'total_amount' => $totals['total'], 'subtotal_amount' => $totals['subtotal'],
+            'discount_amount' => $totals['discount'], 'coupon_code' => $promotion['code'], 'tax_amount' => $tax['amount'],
+            'tax_rate' => $tax['rate'], 'tax_rule_id' => $tax['rule_id'], 'shipping_amount' => $totals['shipping'], 'currency' => $currency,
             'shipping_address' => $address, 'idempotency_key' => $key,
         ], $cleanLines, $promotion['code'], $promotion['discount'], $userId);
     }
