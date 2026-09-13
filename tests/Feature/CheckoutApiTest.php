@@ -113,6 +113,35 @@ final class CheckoutApiTest extends TestCase
         $this->assertDatabaseHas('payments', ['user_id' => $user->id, 'status' => 'pending']);
     }
 
+    public function test_guest_can_create_payment_without_creating_an_account(): void
+    {
+        Setting::query()->create([
+            'group' => 'checkout', 'key' => 'checkout.require_authentication', 'value' => '0',
+            'type' => 'boolean', 'is_secret' => false, 'is_encrypted' => false,
+        ]);
+        $product = Product::query()->create([
+            'name' => 'Guest Payment Product', 'slug' => 'guest-payment-product',
+            'type' => 'simple', 'status' => 'active', 'price' => 600,
+        ]);
+        InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 2, 'reserved' => 0]);
+
+        $response = $this->postJson('/api/v1/customer/checkout', [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            'guest' => [
+                'name' => 'Guest Buyer', 'email' => 'guest-payment@example.com', 'phone' => '01000000002',
+                'address_line1' => 'Street 1', 'city' => 'Cairo', 'country' => 'EG',
+            ],
+            'idempotency_key' => 'guest-payment-checkout-1',
+            'payment_method' => 'cash_on_delivery',
+            'payment_idempotency_key' => 'guest-payment-1',
+        ]);
+
+        $response->assertCreated();
+        $orderId = $response->json('data.id');
+        $this->assertDatabaseHas('customer_orders', ['id' => $orderId, 'user_id' => null]);
+        $this->assertDatabaseHas('payments', ['order_id' => $orderId, 'user_id' => null, 'status' => 'pending']);
+    }
+
     public function test_guest_checkout_is_rejected_by_default(): void
     {
         $this->postJson('/api/v1/customer/checkout', [])->assertUnauthorized();

@@ -32,14 +32,13 @@ final class CreatePayment
     public function execute(int $orderId, PaymentData $data): object
     {
         $user = $this->authentication->user();
-        if ($user === null) {
-            throw new AuthenticationException('Unauthenticated.');
-        }
         if (! $this->gateway->supports($data->method)) {
             throw new PaymentException('Unsupported payment method.');
         }
 
-        $order = $this->orders->findForUser($user->id, $orderId);
+        $order = $user === null
+            ? $this->orders->find($orderId)
+            : $this->orders->findForUser($user->id, $orderId);
         if ($data->currency !== $order->currency) {
             throw new PaymentAmountMismatchException('Payment currency does not match the order.');
         }
@@ -49,14 +48,16 @@ final class CreatePayment
 
         $claim = $this->payments->claim($data->idempotencyKey, [
             'order_id' => $order->id,
-            'user_id' => $user->id,
+            'user_id' => $user?->id,
             'method' => $data->method,
             'amount' => $order->total_amount,
             'currency' => $order->currency,
             'metadata' => ['idempotency_key' => $data->idempotencyKey],
         ]);
         if (! $claim->acquired) {
-            if ($claim->payment->order_id !== $order->id || $claim->payment->user_id !== $user->id) {
+            if ((int) $claim->payment->order_id !== (int) $order->id
+                || ($claim->payment->user_id !== null && (int) $claim->payment->user_id !== (int) ($user?->id))
+                || ($user !== null && $claim->payment->user_id === null)) {
                 throw new PaymentException('Idempotency key belongs to another order.');
             }
             if (in_array($claim->payment->status, ['pending', 'provider_created', 'confirmed', 'paid', 'refunded', 'failed'], true)) {
@@ -97,7 +98,7 @@ final class CreatePayment
                     'reconciliation_required' => ! ($exception instanceof PaymentFailedException),
                 ],
             ]);
-            if ($exception instanceof PaymentFailedException) {
+            if ($exception instanceof PaymentFailedException && $claim->payment->user_id !== null) {
                 $this->notifications->createForUser(
                     (int) $claim->payment->user_id,
                     'payment.failed',
