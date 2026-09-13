@@ -30,5 +30,22 @@ final class ProductReviewApiTest extends TestCase
         $product = Product::query()->create(['name' => 'Unpurchased Product', 'slug' => 'unpurchased-product', 'type' => 'simple', 'status' => 'active', 'price' => 100]);
         $this->actingAs($customer)->postJson('/api/v1/products/'.$product->id.'/reviews', ['rating' => 5])->assertStatus(409);
     }
+
+    public function test_customer_cannot_access_review_moderation_endpoints(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $customer = $this->user('customer');
+        $review = ProductReview::query()->create([
+            'product_id' => Product::query()->create([
+                'name' => 'Moderated Product', 'slug' => 'moderated-product',
+                'type' => 'simple', 'status' => 'active', 'price' => 100,
+            ])->id,
+            'user_id' => $customer->id, 'rating' => 5, 'status' => 'pending', 'verified_purchase' => true,
+        ]);
+
+        $this->actingAs($customer)->getJson('/api/v1/reviews')->assertForbidden();
+        $this->actingAs($customer)->patchJson('/api/v1/reviews/'.$review->id.'/moderate', ['status' => 'approved'])
+            ->assertForbidden();
+    }
     private function user(string $role): User { $user = User::factory()->create(); $user->roles()->attach(Role::query()->where('slug', $role)->firstOrFail()); return $user; }
 }

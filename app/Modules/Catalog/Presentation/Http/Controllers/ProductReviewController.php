@@ -8,6 +8,6 @@ final class ProductReviewController extends Controller
 {
     public function index(ProductReviewRequest $request, int $product, ManageProductReviews $useCase): JsonResponse { return response()->json(['data' => $useCase->approved($product), 'meta' => $useCase->summary($product)]); }
     public function store(ProductReviewRequest $request, int $product, ManageProductReviews $useCase): JsonResponse { return response()->json(['data' => $useCase->submit((int) $request->user()->id, $product, $request->validated())], 201); }
-    public function adminIndex(ProductReviewRequest $request, ManageProductReviews $useCase): JsonResponse { return response()->json(['data' => $useCase->all()]); }
-    public function moderate(ProductReviewRequest $request, int $review, ManageProductReviews $useCase): JsonResponse { return response()->json(['data' => $useCase->moderate($review, $request->validated('status'))]); }
+    public function adminIndex(ProductReviewRequest $request, ManageProductReviews $useCase): JsonResponse { return response()->json(['data' => $useCase->all($request->user())]); }
+    public function moderate(ProductReviewRequest $request, int $review, ManageProductReviews $useCase): JsonResponse { return response()->json(['data' => $useCase->moderate($request->user(), $review, $request->validated('status'))]); }
 }
