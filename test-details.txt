@@ -1,0 +1,495 @@
+PHPUnit 12.5.35 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.15
+Configuration: /workspaces/ecommerce-platform/phpunit.xml
+
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\AttributeReadUseCasesTest[39m
+  [32;1m✓[39;22m[90m [39m[90mattribute list and get delegate to contract[39m[90m                         [39m [90m0.02s[39m  
+  [32;1m✓[39;22m[90m [39m[90mvalue list validates parent before querying values[39m
+  [32;1m✓[39;22m[90m [39m[90mget value is scoped to parent attribute[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\AuthUseCasesTest[39m
+  [32;1m✓[39;22m[90m [39m[90mauthentication use case returns current user[39m[90m                        [39m [90m0.01s[39m  
+  [32;1m✓[39;22m[90m [39m[90mauthentication use case rejects missing user[39m
+  [32;1m✓[39;22m[90m [39m[90mauthorization delegates to domain contract[39m
+  [32;1m✓[39;22m[90m [39m[90mregistration delegates to user repository[39m
+  [32;1m✓[39;22m[90m [39m[90minvalid login is rejected[39m
+  [32;1m✓[39;22m[90m [39m[90mlogout delegates to authentication service[39m
+  [32;1m✓[39;22m[90m [39m[90mchange password requires current password[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\ControllerArchitectureTest[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " auth cont[39m[90m…[39m [90m0.01s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " attribute controller.php"[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " brand controller.php"[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " category controller.php"[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " product controller.php"[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " product media controller.php"[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " product review controller.php"[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " settings controller.php"[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " checkout controller.php"[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " order controller.php"[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on repositories with data set " return controller.php"[39m
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Unit\EndpointAuthorizationTest[39m
+  [33;1m![39;22m[90m [39m[90mevery api endpoint is v1 and has an explicit security boundary[39m[90m [39m[33m→ fi[39m[90m…[39m [90m0.09s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\ExampleTest[39m
+  [32;1m✓[39;22m[90m [39m[90mthat true is true[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\LayerDependencyArchitectureTest[39m
+  [32;1m✓[39;22m[90m [39m[90mdomain does not depend on application or infrastructure[39m
+  [32;1m✓[39;22m[90m [39m[90mcontrollers do not depend on domain contracts or infrastructure[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\ProductReadUseCasesTest[39m
+  [32;1m✓[39;22m[90m [39m[90mlist products delegates to repository[39m
+  [32;1m✓[39;22m[90m [39m[90mget product delegates to repository[39m
+  [32;1m✓[39;22m[90m [39m[90mlist variants resolves parent before listing[39m
+  [32;1m✓[39;22m[90m [39m[90mget variant is scoped to its parent product[39m
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Unit\ProductionConfigurationTest[39m
+  [33;1m![39;22m[90m [39m[90mproduction environment template disables debug and uses versioned w[39m[90m…[39m [90m0.01s[39m  
+  [33;1m![39;22m[90m [39m[90mproduction operations have deployment artifacts[39m[90m [39m[33m→ file_get_contents[39m[90m…[39m [90m0.01s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\SettingsReadUseCasesTest[39m
+  [32;1m✓[39;22m[90m [39m[90mlist and group use cases delegate to contract[39m[90m                       [39m [90m0.01s[39m  
+  [32;1m✓[39;22m[90m [39m[90mget setting returns the typed value and default[39m
+  [32;1m✓[39;22m[90m [39m[90mget setting throws domain not found exception[39m
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Unit\ShippingArchitectureTest[39m
+  [33;1m![39;22m[90m [39m[90mbosta webhook use case depends on domain contracts not eloquent mod[39m[90m…[39m [90m0.02s[39m  
+  [33;1m![39;22m[90m [39m[90mwebhook event contract is bound to its eloquent adapter[39m[90m [39m[33m→ file_get_[39m[90m…[39m [90m0.01s[39m  
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\StrictArchitectureTest[39m
+  [32;1m✓[39;22m[90m [39m[90mdomain is framework and outer layer independent[39m[90m                     [39m [90m0.02s[39m  
+  [32;1m✓[39;22m[90m [39m[90mapplication cannot bypass domain contracts or infrastructure[39m
+  [32;1m✓[39;22m[90m [39m[90minfrastructure cannot depend on application or http[39m
+  [32;1m✓[39;22m[90m [39m[90mevery controller is thin and uses form request and use case[39m
+  [32;1m✓[39;22m[90m [39m[90mevery http request is a form request[39m
+  [32;1m✓[39;22m[90m [39m[90mdomain contracts are interfaces and infrastructure implements them[39m
+  [32;1m✓[39;22m[90m [39m[90mdomain exceptions are the only business failure boundary[39m
+  [32;1m✓[39;22m[90m [39m[90mcentral error handler is registered in bootstrap[39m
+
+  [30;42;1m PASS [39;49;22m[39m Tests\Unit\TaxonomyReadUseCasesTest[39m
+  [32;1m✓[39;22m[90m [39m[90mbrand read use cases delegate to contract[39m[90m                           [39m [90m0.01s[39m  
+  [32;1m✓[39;22m[90m [39m[90mcategory read use cases delegate to contract[39m
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\ApiAuthorizationTest[39m
+  [33;1m![39;22m[90m [39m[90mevery endpoint requires authentication[39m[90m [39m[33m→ file_get_contents(/workspa[39m[90m…[39m [90m0.28s[39m  
+  [33;1m![39;22m[90m [39m[90mevery endpoint rejects an authenticated user without permission[39m[90m [39m[33m→ f[39m[90m…[39m [90m0.14s[39m  
+  [33;1m![39;22m[90m [39m[90mauthenticated user with permission is not rejected by authorization[39m[90m…[39m [90m0.21s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\ApiVersioningTest[39m
+  [33;1m![39;22m[90m [39m[90monly v1 routes are registered[39m[90m [39m[33m→ file_get_contents(/workspaces/ecomm[39m[90m…[39m [90m0.02s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\AuthApiTest[39m
+  [33;1m![39;22m[90m [39m[90muser can register and is logged in[39m[90m [39m[33m→ file_get_contents(/workspaces/[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mregistration requires one identifier and unique identifier[39m[90m [39m[33m→ file_g[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mlogin me logout and change password[39m[90m [39m[33m→ file_get_contents(/workspaces[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90minvalid or inactive login is rejected and protected routes require[39m[90m… [39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mlogin attempts are rate limited[39m[90m [39m[33m→ file_get_contents(/workspaces/eco[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mrequests receive and propagate a correlation id[39m[90m [39m[33m→ file_get_contents[39m[90m…[39m [90m0.04s[39m  
+  [33;1m![39;22m[90m [39m[90mregistration attempts are rate limited[39m[90m [39m[33m→ file_get_contents(/workspa[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mrole permissions and direct denials are enforced[39m[90m [39m[33m→ file_get_content[39m[90m…[39m [90m0.05s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\CartLifecycleApiTest[39m
+  [33;1m![39;22m[90m [39m[90mcustomer can add variant and totals use variant price[39m[90m [39m[33m→ file_get_co[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mcart rejects quantity above available stock and can be cleared[39m[90m [39m[33m→ fi[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mabandoned cart is marked and notified only once[39m[90m [39m[33m→ file_get_contents[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\CartSchemaTest[39m
+  [33;1m![39;22m[90m [39m[90mcart schema contains the columns required by cart lifecycle code[39m[90m [39m[33m→[39m[90m… [39m [90m0.01s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\CatalogApiTest[39m
+  [33;1m![39;22m[90m [39m[90mproduct crud and missing product response[39m[90m [39m[33m→ file_get_contents(/work[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90msimple product rejects variants and variable product enforces uniqu[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90mstorefront catalog is public but mutations require permissions[39m[90m [39m[33m→ fi[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\CatalogEntitiesApiTest[39m
+  [33;1m![39;22m[90m [39m[90mattribute and value crud and nested 404 responses[39m[90m [39m[33m→ file_get_conten[39m[90m…[39m [90m0.10s[39m  
+  [33;1m![39;22m[90m [39m[90mattribute validation duplicates and used relationships[39m[90m [39m[33m→ file_get_c[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90mbrand crud validation duplicate slug 404 and delete relationship ru[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90mcategory crud validation duplicate slug 404 and relationship rules[39m[90m… [39m [90m0.09s[39m  
+  [33;1m![39;22m[90m [39m[90mcategory parent self and descendant cycles are rejected[39m[90m [39m[33m→ file_get_[39m[90m…[39m [90m0.10s[39m  
+  [33;1m![39;22m[90m [39m[90mcategory with children cannot be deleted[39m[90m [39m[33m→ file_get_contents(/works[39m[90m…[39m [90m0.05s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\CheckoutApiTest[39m
+  [33;1m![39;22m[90m [39m[90mcustomer can checkout using server side price and snapshot[39m[90m [39m[33m→ file_g[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90mguest can checkout when store setting allows it[39m[90m [39m[33m→ file_get_contents[39m[90m…[39m [90m0.02s[39m  
+  [33;1m![39;22m[90m [39m[90mguest checkout is rejected by default[39m[90m [39m[33m→ file_get_contents(/workspac[39m[90m…[39m [90m0.01s[39m  
+  [33;1m![39;22m[90m [39m[90mcheckout is idempotent for the same key[39m[90m [39m[33m→ file_get_contents(/worksp[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mcheckout applies coupon and tax and snapshots both[39m[90m [39m[33m→ file_get_conte[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mcheckout orchestrates shipping and payment after reserving inventor[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mcheckout rolls back order and inventory when shipping creation fail[39m[90m…[39m [90m0.07s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\CustomerApiTest[39m
+  [33;1m![39;22m[90m [39m[90mcustomer can read and update own profile through layered flow[39m[90m [39m[33m→ fil[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mguest cannot access customer profile[39m[90m [39m[33m→ file_get_contents(/workspace[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mauthenticated user without customer permission is forbidden[39m[90m [39m[33m→ file_[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mcustomer profile validation rejects duplicate identifiers[39m[90m [39m[33m→ file_ge[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\CustomerFeaturesApiTest[39m
+  [33;1m![39;22m[90m [39m[90maddresses default address cart wishlist preferences and notificatio[39m[90m…[39m [90m0.10s[39m  
+  [33;1m![39;22m[90m [39m[90mcustomer cannot read modify or delete another customers data[39m[90m [39m[33m→ file[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mcustomer can list only own orders and guests are rejected[39m[90m [39m[33m→ file_ge[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90maddress default is unique promoted and validated[39m[90m [39m[33m→ file_get_content[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\CustomerSchemaTest[39m
+  [33;1m![39;22m[90m [39m[90mcustomer tables contain the columns used by the module[39m[90m [39m[33m→ file_get_c[39m[90m…[39m [90m0.01s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\ExampleTest[39m
+  [33;1m![39;22m[90m [39m[90mthe application returns a successful response[39m[90m [39m[33m→ file_get_contents(/[39m[90m…[39m [90m0.02s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\InventoryApiTest[39m
+  [33;1m![39;22m[90m [39m[90minventory requires authentication and permission[39m[90m [39m[33m→ file_get_content[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mproduct manager can adjust stock and movement is recorded[39m[90m [39m[33m→ file_ge[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mstock cannot go below reserved and reservation lifecycle is safe[39m[90m [39m[33m→[39m[90m… [39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90minvalid adjustment and variant mismatch are rejected[39m[90m [39m[33m→ file_get_con[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\InventorySchemaTest[39m
+  [33;1m![39;22m[90m [39m[90minventory schema contains item and movement tables[39m[90m [39m[33m→ file_get_conte[39m[90m…[39m [90m0.01s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\OpenApiContractTest[39m
+  [33;1m![39;22m[90m [39m[90mopenapi documents every registered v1 operation[39m[90m [39m[33m→ file_get_contents[39m[90m…[39m [90m0.01s[39m  
+  [33;1m![39;22m[90m [39m[90mopenapi publishes security rate limit idempotency and error contrac[39m[90m…[39m [90m0.01s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\OrderCrudApiTest[39m
+  [33;1m![39;22m[90m [39m[90mcustomer can list and show only owned orders[39m[90m [39m[33m→ file_get_contents(/w[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90morder manager can update status and invalid transition is conflict[39m[90m… [39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mcustomer can cancel pending order but cannot cancel delivered order[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mshipping an order commits reserved inventory[39m[90m [39m[33m→ file_get_contents(/w[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\PaymentApiTest[39m
+  [33;1m![39;22m[90m [39m[90mcustomer can create and list cash on delivery payment[39m[90m [39m[33m→ file_get_co[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mpayment uses server order amount and is idempotent[39m[90m [39m[33m→ file_get_conte[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mmismatched payment amount is rejected[39m[90m [39m[33m→ file_get_contents(/workspac[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mowner can confirm and refund payment with state protection[39m[90m [39m[33m→ file_g[39m[90m…[39m [90m0.07s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\ProductApiTest[39m
+  [33;1m![39;22m[90m [39m[90mproduct crud lists relations and returns 404[39m[90m [39m[33m→ file_get_contents(/w[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90mproduct validation and duplicate slug conflicts[39m[90m [39m[33m→ file_get_contents[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mproduct search filters and pagination are validated[39m[90m [39m[33m→ file_get_cont[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mvariant crud and nested 404 boundaries[39m[90m [39m[33m→ file_get_contents(/workspa[39m[90m…[39m [90m0.10s[39m  
+  [33;1m![39;22m[90m [39m[90msimple and variable product rules[39m[90m [39m[33m→ file_get_contents(/workspaces/e[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mduplicate sku and duplicate attribute combinations return 409[39m[90m [39m[33m→ fil[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mvariant validation and incorrect attribute relationships are reject[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mupdate variant detects sku and combination conflicts[39m[90m [39m[33m→ file_get_con[39m[90m…[39m [90m0.08s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\ProductMediaApiTest[39m
+  [33;1m![39;22m[90m [39m[90madmin can upload list reorder and delete product media[39m[90m [39m[33m→ file_get_c[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90mmedia validation rejects non images and customers cannot upload[39m[90m [39m[33m→ f[39m[90m…[39m [90m0.05s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\ProductReviewApiTest[39m
+  [33;1m![39;22m[90m [39m[90mverified customer can submit and admin can moderate review[39m[90m [39m[33m→ file_g[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mcustomer cannot review without a delivered purchase[39m[90m [39m[33m→ file_get_cont[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\PromotionTaxManagementApiTest[39m
+  [33;1m![39;22m[90m [39m[90madmin can manage coupons and tax rules[39m[90m [39m[33m→ file_get_contents(/workspa[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mcustomer cannot manage promotions or taxes[39m[90m [39m[33m→ file_get_contents(/wor[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mcoupon management validates business values and usage limits are en[39m[90m…[39m [90m0.08s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\RbacSecurityTest[39m
+  [33;1m![39;22m[90m [39m[90mrole matrix for manager product manager order manager support and c[39m[90m…[39m [90m0.09s[39m  
+  [33;1m![39;22m[90m [39m[90mowner has every seeded permission[39m[90m [39m[33m→ file_get_contents(/workspaces/e[39m[90m…[39m [90m0.11s[39m  
+  [33;1m![39;22m[90m [39m[90mmultiple roles union permissions without inventing permissions[39m[90m [39m[33m→ fi[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mexplicit user override has priority over role resolution[39m[90m [39m[33m→ file_get[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mrole and permission removal revoke access[39m[90m [39m[33m→ file_get_contents(/work[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mdisabled role and disabled user cannot authorize or use protected e[39m[90m…[39m [90m0.10s[39m  
+  [33;1m![39;22m[90m [39m[90munknown permission is a clean denial and authorize use case maps to[39m[90m…[39m [90m0.11s[39m  
+  [33;1m![39;22m[90m [39m[90mseeder is idempotent and slugs are unique[39m[90m [39m[33m→ file_get_contents(/work[39m[90m…[39m [90m0.10s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\ReturnsApiTest[39m
+  [33;1m![39;22m[90m [39m[90mcustomer can request return and admin can approve it[39m[90m [39m[33m→ file_get_con[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90monly delivered orders and valid quantities can be returned[39m[90m [39m[33m→ file_g[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\ReturnsSchemaTest[39m
+  [33;1m![39;22m[90m [39m[90mreturns schema contains return and item tables[39m[90m [39m[33m→ file_get_contents([39m[90m…[39m [90m0.01s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\RolePermissionMatrixTest[39m
+  [33;1m![39;22m[90m [39m[90mcustomer can access profile but cannot create products or update se[39m[90m…[39m [90m0.09s[39m  
+  [33;1m![39;22m[90m [39m[90mproduct manager can create products but cannot manage orders[39m[90m [39m[33m→ file[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90morder manager can manage orders but cannot delete products[39m[90m [39m[33m→ file_g[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mowner has the required cross domain permissions[39m[90m [39m[33m→ file_get_contents[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\SettingsApiTest[39m
+  [33;1m![39;22m[90m [39m[90msettings update list group show and update existing value[39m[90m [39m[33m→ file_ge[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90msettings support json float and nullable string values[39m[90m [39m[33m→ file_get_c[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mmissing setting returns 404 and empty group returns an empty list[39m[90m [39m[33m→[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90msetting validation covers required fields and type specific values[39m[90m… [39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mview and update permissions are independent[39m[90m [39m[33m→ file_get_contents(/wo[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mabandoned cart scan time accepts valid time and rejects invalid tim[39m[90m…[39m [90m0.06s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\ShippingApiTest[39m
+  [33;1m![39;22m[90m [39m[90mcustomer can list methods create shipment and list own shipments[39m[90m [39m[33m→[39m[90m… [39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mshipment creation is idempotent and foreign order is hidden[39m[90m [39m[33m→ file_[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mowner can manage methods and update shipment status[39m[90m [39m[33m→ file_get_cont[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mdelivered shipment completes shipped order[39m[90m [39m[33m→ file_get_contents(/wor[39m[90m…[39m [90m0.05s[39m  
+
+  [30;43;1m WARN [39;49;22m[39m Tests\Feature\StaffApiTest[39m
+  [33;1m![39;22m[90m [39m[90mguest cannot access staff[39m[90m [39m[33m→ file_get_contents(/workspaces/ecommerce[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90muser without staff permission is forbidden[39m[90m [39m[33m→ file_get_contents(/wor[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mowner can create list update and delete staff[39m[90m [39m[33m→ file_get_contents(/[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mpatch without roles preserves existing roles[39m[90m [39m[33m→ file_get_contents(/w[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mowner cannot be modified or deleted[39m[90m [39m[33m→ file_get_contents(/workspaces[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mstaff cannot delete or deactivate themselves[39m[90m [39m[33m→ file_get_contents(/w[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90minactive roles cannot be assigned[39m[90m [39m[33m→ file_get_contents(/workspaces/e[39m[90m…[39m [90m0.08s[39m  
+  [33;1m![39;22m[90m [39m[90mlast owner cannot be deactivated or deleted[39m[90m [39m[33m→ file_get_contents(/wo[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90msystem has an active owner after staff actions[39m[90m [39m[33m→ file_get_contents([39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mpatch validates password email and phone[39m[90m [39m[33m→ file_get_contents(/works[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mpassword is hashed and email and phone are saved[39m[90m [39m[33m→ file_get_content[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90mstaff request validates customer role[39m[90m [39m[33m→ file_get_contents(/workspac[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mstaff lookup of customer returns not found[39m[90m [39m[33m→ file_get_contents(/wor[39m[90m…[39m [90m0.06s[39m  
+  [33;1m![39;22m[90m [39m[90minactive staff cannot authenticate[39m[90m [39m[33m→ file_get_contents(/workspaces/[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mdeleted staff cannot authenticate[39m[90m [39m[33m→ file_get_contents(/workspaces/e[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mexplicit empty roles removes all non owner roles[39m[90m [39m[33m→ file_get_content[39m[90m…[39m [90m0.05s[39m  
+  [33;1m![39;22m[90m [39m[90mstaff password can be updated and old password stops working[39m[90m [39m[33m→ file[39m[90m…[39m [90m0.07s[39m  
+  [33;1m![39;22m[90m [39m[90mstaff mutations are audited[39m[90m [39m[33m→ file_get_contents(/workspaces/ecommer[39m[90m…[39m [90m0.07s[39m  
+
+  [90mTests:[39m    [33;1m120 warnings[39;22m[90m,[39m[39m [39m[32;1m41 passed[39;22m[90m (5084 assertions)[39m
+  [90mDuration:[39m [39m8.03s[39m
+
+Time: 00:07.912, Memory: 74.50 MB
+
+[4mApi Authorization (Tests\Feature\ApiAuthorization)[0m
+[32m ✔ [0mEvery endpoint requires authentication
+[32m ✔ [0mEvery endpoint rejects an authenticated user without permission
+[32m ✔ [0mAuthenticated user with permission is not rejected by authorization
+
+[4mApi Versioning (Tests\Feature\ApiVersioning)[0m
+[32m ✔ [0mOnly v1 routes are registered
+
+[4mAttribute Read Use Cases (Tests\Unit\AttributeReadUseCases)[0m
+[32m ✔ [0mAttribute list and get delegate to contract
+[32m ✔ [0mValue list validates parent before querying values
+[32m ✔ [0mGet value is scoped to parent attribute
+
+[4mAuth Api (Tests\Feature\AuthApi)[0m
+[32m ✔ [0mUser can register and is logged in
+[32m ✔ [0mRegistration requires one identifier and unique identifier
+[32m ✔ [0mLogin me logout and change password
+[32m ✔ [0mInvalid or inactive login is rejected and protected routes require authentication
+[32m ✔ [0mLogin attempts are rate limited
+[32m ✔ [0mRequests receive and propagate a correlation id
+[32m ✔ [0mRegistration attempts are rate limited
+[32m ✔ [0mRole permissions and direct denials are enforced
+
+[4mAuth Use Cases (Tests\Unit\AuthUseCases)[0m
+[32m ✔ [0mAuthentication use case returns current user
+[32m ✔ [0mAuthentication use case rejects missing user
+[32m ✔ [0mAuthorization delegates to domain contract
+[32m ✔ [0mRegistration delegates to user repository
+[32m ✔ [0mInvalid login is rejected
+[32m ✔ [0mLogout delegates to authentication service
+[32m ✔ [0mChange password requires current password
+
+[4mCart Lifecycle Api (Tests\Feature\CartLifecycleApi)[0m
+[32m ✔ [0mCustomer can add variant and totals use variant price
+[32m ✔ [0mCart rejects quantity above available stock and can be cleared
+[32m ✔ [0mAbandoned cart is marked and notified only once
+
+[4mCart Schema (Tests\Feature\CartSchema)[0m
+[32m ✔ [0mCart schema contains the columns required by cart lifecycle code
+
+[4mCatalog Api (Tests\Feature\CatalogApi)[0m
+[32m ✔ [0mProduct crud and missing product response
+[32m ✔ [0mSimple product rejects variants and variable product enforces uniqueness
+[32m ✔ [0mStorefront catalog is public but mutations require permissions
+
+[4mCatalog Entities Api (Tests\Feature\CatalogEntitiesApi)[0m
+[32m ✔ [0mAttribute and value crud and nested 404 responses
+[32m ✔ [0mAttribute validation duplicates and used relationships
+[32m ✔ [0mBrand crud validation duplicate slug 404 and delete relationship rule
+[32m ✔ [0mCategory crud validation duplicate slug 404 and relationship rules
+[32m ✔ [0mCategory parent self and descendant cycles are rejected
+[32m ✔ [0mCategory with children cannot be deleted
+
+[4mCheckout Api (Tests\Feature\CheckoutApi)[0m
+[32m ✔ [0mCustomer can checkout using server side price and snapshot
+[32m ✔ [0mGuest can checkout when store setting allows it
+[32m ✔ [0mGuest checkout is rejected by default
+[32m ✔ [0mCheckout is idempotent for the same key
+[32m ✔ [0mCheckout applies coupon and tax and snapshots both
+[32m ✔ [0mCheckout orchestrates shipping and payment after reserving inventory
+[32m ✔ [0mCheckout rolls back order and inventory when shipping creation fails
+
+[4mController Architecture (Tests\Unit\ControllerArchitecture)[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mAuthController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mAttributeController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mBrandController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mCategoryController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mProductController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mProductMediaController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mProductReviewController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mSettingsController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mCheckoutController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mOrderController.php[0m
+[32m ✔ [0mControllers do not depend on repositories[2m with [22m[36mReturnController.php[0m
+
+[4mCustomer Api (Tests\Feature\CustomerApi)[0m
+[32m ✔ [0mCustomer can read and update own profile through layered flow
+[32m ✔ [0mGuest cannot access customer profile
+[32m ✔ [0mAuthenticated user without customer permission is forbidden
+[32m ✔ [0mCustomer profile validation rejects duplicate identifiers
+
+[4mCustomer Features Api (Tests\Feature\CustomerFeaturesApi)[0m
+[32m ✔ [0mAddresses default address cart wishlist preferences and notifications
+[32m ✔ [0mCustomer cannot read modify or delete another customers data
+[32m ✔ [0mCustomer can list only own orders and guests are rejected
+[32m ✔ [0mAddress default is unique promoted and validated
+
+[4mCustomer Schema (Tests\Feature\CustomerSchema)[0m
+[32m ✔ [0mCustomer tables contain the columns used by the module
+
+[4mEndpoint Authorization (Tests\Unit\EndpointAuthorization)[0m
+[32m ✔ [0mEvery api endpoint is v1 and has an explicit security boundary
+
+[4mExample (Tests\Feature\Example)[0m
+[32m ✔ [0mThe application returns a successful response
+
+[4mExample (Tests\Unit\Example)[0m
+[32m ✔ [0mThat true is true
+
+[4mInventory Api (Tests\Feature\InventoryApi)[0m
+[32m ✔ [0mInventory requires authentication and permission
+[32m ✔ [0mProduct manager can adjust stock and movement is recorded
+[32m ✔ [0mStock cannot go below reserved and reservation lifecycle is safe
+[32m ✔ [0mInvalid adjustment and variant mismatch are rejected
+
+[4mInventory Schema (Tests\Feature\InventorySchema)[0m
+[32m ✔ [0mInventory schema contains item and movement tables
+
+[4mLayer Dependency Architecture (Tests\Unit\LayerDependencyArchitecture)[0m
+[32m ✔ [0mDomain does not depend on application or infrastructure
+[32m ✔ [0mControllers do not depend on domain contracts or infrastructure
+
+[4mOpen Api Contract (Tests\Feature\OpenApiContract)[0m
+[32m ✔ [0mOpenapi documents every registered v1 operation
+[32m ✔ [0mOpenapi publishes security rate limit idempotency and error contracts
+
+[4mOrder Crud Api (Tests\Feature\OrderCrudApi)[0m
+[32m ✔ [0mCustomer can list and show only owned orders
+[32m ✔ [0mOrder manager can update status and invalid transition is conflict
+[32m ✔ [0mCustomer can cancel pending order but cannot cancel delivered order
+[32m ✔ [0mShipping an order commits reserved inventory
+
+[4mPayment Api (Tests\Feature\PaymentApi)[0m
+[32m ✔ [0mCustomer can create and list cash on delivery payment
+[32m ✔ [0mPayment uses server order amount and is idempotent
+[32m ✔ [0mMismatched payment amount is rejected
+[32m ✔ [0mOwner can confirm and refund payment with state protection
+
+[4mProduct Api (Tests\Feature\ProductApi)[0m
+[32m ✔ [0mProduct crud lists relations and returns 404
+[32m ✔ [0mProduct validation and duplicate slug conflicts
+[32m ✔ [0mProduct search filters and pagination are validated
+[32m ✔ [0mVariant crud and nested 404 boundaries
+[32m ✔ [0mSimple and variable product rules
+[32m ✔ [0mDuplicate sku and duplicate attribute combinations return 409
+[32m ✔ [0mVariant validation and incorrect attribute relationships are rejected
+[32m ✔ [0mUpdate variant detects sku and combination conflicts
+
+[4mProduction Configuration (Tests\Unit\ProductionConfiguration)[0m
+[32m ✔ [0mProduction environment template disables debug and uses versioned webhooks
+[32m ✔ [0mProduction operations have deployment artifacts
+
+[4mProduct Media Api (Tests\Feature\ProductMediaApi)[0m
+[32m ✔ [0mAdmin can upload list reorder and delete product media
+[32m ✔ [0mMedia validation rejects non images and customers cannot upload
+
+[4mProduct Read Use Cases (Tests\Unit\ProductReadUseCases)[0m
+[32m ✔ [0mList products delegates to repository
+[32m ✔ [0mGet product delegates to repository
+[32m ✔ [0mList variants resolves parent before listing
+[32m ✔ [0mGet variant is scoped to its parent product
+
+[4mProduct Review Api (Tests\Feature\ProductReviewApi)[0m
+[32m ✔ [0mVerified customer can submit and admin can moderate review
+[32m ✔ [0mCustomer cannot review without a delivered purchase
+
+[4mPromotion Tax Management Api (Tests\Feature\PromotionTaxManagementApi)[0m
+[32m ✔ [0mAdmin can manage coupons and tax rules
+[32m ✔ [0mCustomer cannot manage promotions or taxes
+[32m ✔ [0mCoupon management validates business values and usage limits are enforced
+
+[4mRbac Security (Tests\Feature\RbacSecurity)[0m
+[32m ✔ [0mRole matrix for manager product manager order manager support and customer
+[32m ✔ [0mOwner has every seeded permission
+[32m ✔ [0mMultiple roles union permissions without inventing permissions
+[32m ✔ [0mExplicit user override has priority over role resolution
+[32m ✔ [0mRole and permission removal revoke access
+[32m ✔ [0mDisabled role and disabled user cannot authorize or use protected endpoint
+[32m ✔ [0mUnknown permission is a clean denial and authorize use case maps to 403
+[32m ✔ [0mSeeder is idempotent and slugs are unique
+
+[4mReturns Api (Tests\Feature\ReturnsApi)[0m
+[32m ✔ [0mCustomer can request return and admin can approve it
+[32m ✔ [0mOnly delivered orders and valid quantities can be returned
+
+[4mReturns Schema (Tests\Feature\ReturnsSchema)[0m
+[32m ✔ [0mReturns schema contains return and item tables
+
+[4mRole Permission Matrix (Tests\Feature\RolePermissionMatrix)[0m
+[32m ✔ [0mCustomer can access profile but cannot create products or update settings
+[32m ✔ [0mProduct manager can create products but cannot manage orders
+[32m ✔ [0mOrder manager can manage orders but cannot delete products
+[32m ✔ [0mOwner has the required cross domain permissions
+
+[4mSettings Api (Tests\Feature\SettingsApi)[0m
+[32m ✔ [0mSettings update list group show and update existing value
+[32m ✔ [0mSettings support json float and nullable string values
+[32m ✔ [0mMissing setting returns 404 and empty group returns an empty list
+[32m ✔ [0mSetting validation covers required fields and type specific values
+[32m ✔ [0mView and update permissions are independent
+[32m ✔ [0mAbandoned cart scan time accepts valid time and rejects invalid time
+
+[4mSettings Read Use Cases (Tests\Unit\SettingsReadUseCases)[0m
+[32m ✔ [0mList and group use cases delegate to contract
+[32m ✔ [0mGet setting returns the typed value and default
+[32m ✔ [0mGet setting throws domain not found exception
+
+[4mShipping Api (Tests\Feature\ShippingApi)[0m
+[32m ✔ [0mCustomer can list methods create shipment and list own shipments
+[32m ✔ [0mShipment creation is idempotent and foreign order is hidden
+[32m ✔ [0mOwner can manage methods and update shipment status
+[32m ✔ [0mDelivered shipment completes shipped order
+
+[4mShipping Architecture (Tests\Unit\ShippingArchitecture)[0m
+[32m ✔ [0mBosta webhook use case depends on domain contracts not eloquent models
+[32m ✔ [0mWebhook event contract is bound to its eloquent adapter
+
+[4mStaff Api (Tests\Feature\StaffApi)[0m
+[32m ✔ [0mGuest cannot access staff
+[32m ✔ [0mUser without staff permission is forbidden
+[32m ✔ [0mOwner can create list update and delete staff
+[32m ✔ [0mPatch without roles preserves existing roles
+[32m ✔ [0mOwner cannot be modified or deleted
+[32m ✔ [0mStaff cannot delete or deactivate themselves
+[32m ✔ [0mInactive roles cannot be assigned
+[32m ✔ [0mLast owner cannot be deactivated or deleted
+[32m ✔ [0mSystem has an active owner after staff actions
+[32m ✔ [0mPatch validates password email and phone
+[32m ✔ [0mPassword is hashed and email and phone are saved
+[32m ✔ [0mStaff request validates customer role
+[32m ✔ [0mStaff lookup of customer returns not found
+[32m ✔ [0mInactive staff cannot authenticate
+[32m ✔ [0mDeleted staff cannot authenticate
+[32m ✔ [0mExplicit empty roles removes all non owner roles
+[32m ✔ [0mStaff password can be updated and old password stops working
+[32m ✔ [0mStaff mutations are audited
+
+[4mStrict Architecture (Tests\Unit\StrictArchitecture)[0m
+[32m ✔ [0mDomain is framework and outer layer independent
+[32m ✔ [0mApplication cannot bypass domain contracts or infrastructure
+[32m ✔ [0mInfrastructure cannot depend on application or http
+[32m ✔ [0mEvery controller is thin and uses form request and use case
+[32m ✔ [0mEvery http request is a form request
+[32m ✔ [0mDomain contracts are interfaces and infrastructure implements them
+[32m ✔ [0mDomain exceptions are the only business failure boundary
+[32m ✔ [0mCentral error handler is registered in bootstrap
+
+[4mTaxonomy Read Use Cases (Tests\Unit\TaxonomyReadUseCases)[0m
+[32m ✔ [0mBrand read use cases delegate to contract
+[32m ✔ [0mCategory read use cases delegate to contract
+
+[30;43mOK, but there were issues![0m
+[30;43mTests: 161[0m[30;43m, Assertions: 5084[0m[30;43m, PHPUnit Notices: 2[0m[30;43m.[0m
