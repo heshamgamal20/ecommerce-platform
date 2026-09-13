@@ -24,10 +24,9 @@ final class ManageCustomerNotifications
         return $user->id;
     }
 
-    /** @return iterable<int, object> */
-    public function list(bool $unreadOnly = false): iterable
+    public function list(bool $unreadOnly = false, int $perPage = 25): object
     {
-        return $this->repo->listForUser($this->id(), $unreadOnly);
+        return $this->repo->listForUser($this->id(), $unreadOnly, $perPage);
     }
 
     public function unreadCount(): int

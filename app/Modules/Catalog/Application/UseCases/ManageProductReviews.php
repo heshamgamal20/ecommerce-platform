@@ -12,15 +12,15 @@ final class ManageProductReviews
         private readonly AuthorizeUser $authorize,
     ) {}
 
-    public function approved(int $productId): iterable { return $this->reviews->approvedForProduct($productId); }
+    public function approved(int $productId, int $perPage = 25): object { return $this->reviews->approvedForProduct($productId, $perPage); }
     public function summary(int $productId): array { return $this->reviews->summary($productId); }
     public function submit(int $userId, int $productId, array $data): object { return $this->reviews->createForVerifiedCustomer($userId, $productId, $data); }
 
-    public function all(object $actor): iterable
+    public function all(object $actor, int $perPage = 25): object
     {
         $this->authorize->execute($actor, 'reviews.view');
 
-        return $this->reviews->all();
+        return $this->reviews->all($perPage);
     }
 
     public function moderate(object $actor, int $reviewId, string $status): object

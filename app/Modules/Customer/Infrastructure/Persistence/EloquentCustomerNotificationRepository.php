@@ -10,13 +10,13 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 final class EloquentCustomerNotificationRepository implements CustomerNotificationRepositoryInterface
 {
-    public function listForUser(int $userId, bool $unreadOnly = false): iterable
+    public function listForUser(int $userId, bool $unreadOnly = false, int $perPage = 25): object
     {
         return CustomerNotification::query()
             ->where('user_id', $userId)
             ->when($unreadOnly, static fn ($query) => $query->whereNull('read_at'))
             ->latest()
-            ->get();
+            ->paginate(min(max($perPage, 1), 100));
     }
 
     public function unreadCountForUser(int $userId): int

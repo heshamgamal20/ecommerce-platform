@@ -5,7 +5,7 @@ namespace App\Modules\Customer\Domain\Contracts;
 interface CustomerNotificationRepositoryInterface
 {
     /** @return iterable<int, object> */
-    public function listForUser(int $userId, bool $unreadOnly = false): iterable;
+    public function listForUser(int $userId, bool $unreadOnly = false, int $perPage = 25): object;
 
     public function unreadCountForUser(int $userId): int;
 

@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\DB;
 
 final class EloquentInventoryRepository implements InventoryRepositoryInterface
 {
-    public function list(): iterable
+    public function list(int $perPage = 25): object
     {
-        return InventoryItem::query()->with(['product', 'variant'])->latest()->get();
+        return InventoryItem::query()->with(['product', 'variant'])->latest()->paginate(min(max($perPage, 1), 100));
     }
 
     public function find(int $id): InventoryItem

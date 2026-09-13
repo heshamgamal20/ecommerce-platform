@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 class EloquentProductRepository implements ProductRepositoryInterface
 {
-    public function all(): iterable { return Product::query()->with(['brand', 'category'])->orderByDesc('id')->get(); }
+    public function all(int $perPage = 20): object { return Product::query()->with(['brand', 'category'])->orderByDesc('id')->paginate(min(max($perPage, 1), 100)); }
     public function search(ProductListCriteria $criteria): object
     {
         $query = Product::query()->with(['brand', 'category'])

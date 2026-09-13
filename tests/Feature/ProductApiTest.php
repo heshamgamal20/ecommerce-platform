@@ -36,7 +36,7 @@ class ProductApiTest extends TestCase
         ])->assertCreated()->assertJsonPath('data.slug', 'phone')->assertJsonPath('data.brand.id', $brand->id);
         $id = $create->json('data.id');
 
-        $this->getJson('/api/v1/products')->assertOk()->assertJsonPath('data.0.id', $id);
+        $this->getJson('/api/v1/products')->assertOk()->assertJsonPath('data.data.0.id', $id)->assertJsonPath('data.per_page', 20);
         $this->getJson("/api/v1/products/{$id}")->assertOk()->assertJsonPath('data.category.id', $category->id);
         $this->patchJson("/api/v1/products/{$id}", [
             'name' => 'Smart Phone', 'slug' => 'smart-phone', 'description' => null,

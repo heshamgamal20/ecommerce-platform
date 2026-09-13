@@ -8,7 +8,7 @@ use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
 
 interface ProductRepositoryInterface
 {
-    public function all(): iterable;
+    public function all(int $perPage = 20): object;
     public function search(ProductListCriteria $criteria): object;
     public function findOrFail(int $id): object;
     public function slugExists(string $slug, ?int $exceptId = null): bool;

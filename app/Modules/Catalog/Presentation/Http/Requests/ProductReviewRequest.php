@@ -17,6 +17,9 @@ final class ProductReviewRequest extends FormRequest
     }
     public function rules(): array
     {
+        if (in_array($this->route()?->getName(), ['customer.reviews.index', 'reviews.index'], true)) {
+            return ['per_page' => ['sometimes', 'integer', 'min:1', 'max:100']];
+        }
         return match ($this->route()?->getName()) {
             'customer.reviews.store' => ['variant_id' => ['nullable','integer','exists:product_variants,id'], 'rating' => ['required','integer','min:1','max:5'], 'title' => ['nullable','string','max:160'], 'body' => ['nullable','string','max:5000']],
             'reviews.moderate' => ['status' => ['required','in:approved,rejected']],

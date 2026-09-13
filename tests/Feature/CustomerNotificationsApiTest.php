@@ -46,8 +46,9 @@ final class CustomerNotificationsApiTest extends TestCase
         $this->actingAs($customer)
             ->getJson('/api/v1/customer/notifications?unread=1')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id', $unread->id)
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $unread->id)
+            ->assertJsonPath('data.per_page', 25)
             ->assertJsonPath('unread_count', 1)
             ->assertJsonMissing(['title' => 'Private']);
 

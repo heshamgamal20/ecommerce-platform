@@ -11,7 +11,7 @@ final class CustomerFeaturesApiTest extends TestCase {
   $this->actingAs($this->customer)->postJson('/api/v1/customer/cart/items',['product_id'=>$this->product->id,'quantity'=>2])->assertCreated();$this->actingAs($this->customer)->getJson('/api/v1/customer/cart')->assertOk()->assertJsonPath('data.items.0.quantity',2);
   $this->actingAs($this->customer)->postJson('/api/v1/customer/wishlist',['product_id'=>$this->product->id])->assertCreated();$this->actingAs($this->customer)->getJson('/api/v1/customer/wishlist')->assertOk()->assertJsonCount(1,'data');
   $this->actingAs($this->customer)->putJson('/api/v1/customer/preferences',['data'=>['locale'=>'ar','marketing'=>false]])->assertOk();$this->actingAs($this->customer)->getJson('/api/v1/customer/preferences')->assertOk()->assertJsonPath('data.data.locale','ar');
-  CustomerNotification::query()->create(['user_id'=>$this->customer->id,'type'=>'order','title'=>'Order','body'=>'Ready']);$this->actingAs($this->customer)->getJson('/api/v1/customer/notifications')->assertOk()->assertJsonCount(1,'data');
+  CustomerNotification::query()->create(['user_id'=>$this->customer->id,'type'=>'order','title'=>'Order','body'=>'Ready']);$this->actingAs($this->customer)->getJson('/api/v1/customer/notifications')->assertOk()->assertJsonCount(1,'data.data');
  }
  public function test_customer_cannot_read_modify_or_delete_another_customers_data():void{
   $other=User::factory()->create();

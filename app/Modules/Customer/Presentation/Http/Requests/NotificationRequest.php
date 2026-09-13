@@ -16,6 +16,6 @@ final class NotificationRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['unread' => ['sometimes', 'boolean']];
+        return ['unread' => ['sometimes', 'boolean'], 'per_page' => ['sometimes', 'integer', 'min:1', 'max:100']];
     }
 }
