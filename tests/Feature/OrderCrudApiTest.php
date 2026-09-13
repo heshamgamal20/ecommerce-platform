@@ -86,6 +86,38 @@ final class OrderCrudApiTest extends TestCase
         ]);
     }
 
+    public function test_repeated_shipped_transition_does_not_commit_inventory_twice(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $manager = $this->userWithRole('order_manager');
+        $customer = User::factory()->create();
+        $product = Product::query()->create(['name' => 'Retry Product', 'slug' => 'retry-product', 'type' => 'simple', 'status' => 'active', 'price' => 100]);
+        $order = CustomerOrder::query()->create(['user_id' => $customer->id, 'status' => 'processing', 'total_amount' => 100, 'currency' => 'EGP']);
+        $order->items()->create(['product_id' => $product->id, 'name' => $product->name, 'quantity' => 1, 'unit_price' => 100, 'total_amount' => 100]);
+        $inventory = InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 3, 'reserved' => 1]);
+
+        $this->actingAs($manager)->patchJson("/api/v1/orders/{$order->id}/status", ['status' => 'shipped'])->assertOk();
+        $this->actingAs($manager)->patchJson("/api/v1/orders/{$order->id}/status", ['status' => 'shipped'])->assertOk();
+
+        $this->assertDatabaseHas('inventory_items', ['id' => $inventory->id, 'on_hand' => 2, 'reserved' => 0]);
+        $this->assertDatabaseCount('inventory_movements', 1);
+    }
+
+    public function test_repeated_cancellation_does_not_release_inventory_twice(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $customer = $this->userWithRole('customer');
+        $product = Product::query()->create(['name' => 'Cancel Retry Product', 'slug' => 'cancel-retry-product', 'type' => 'simple', 'status' => 'active', 'price' => 100]);
+        $order = CustomerOrder::query()->create(['user_id' => $customer->id, 'status' => 'pending', 'total_amount' => 100, 'currency' => 'EGP']);
+        $order->items()->create(['product_id' => $product->id, 'name' => $product->name, 'quantity' => 1, 'unit_price' => 100, 'total_amount' => 100]);
+        $inventory = InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 3, 'reserved' => 1]);
+
+        $this->actingAs($customer)->postJson("/api/v1/customer/orders/{$order->id}/cancel")->assertOk();
+        $this->actingAs($customer)->postJson("/api/v1/customer/orders/{$order->id}/cancel")->assertOk();
+
+        $this->assertDatabaseHas('inventory_items', ['id' => $inventory->id, 'on_hand' => 3, 'reserved' => 0]);
+    }
+
     private function userWithRole(string $role): User
     {
         $user = User::factory()->create();

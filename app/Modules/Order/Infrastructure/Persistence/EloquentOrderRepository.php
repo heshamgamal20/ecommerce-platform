@@ -52,6 +52,11 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             if ($order === null) {
                 throw new OrderNotFoundException('Order not found.');
             }
+            // A retry of the same transition is a successful no-op. The row lock
+            // guarantees only the first shipped transition can commit inventory.
+            if ((string) $order->status === $status) {
+                return $order->fresh(['user', 'items.product']);
+            }
             OrderLifecycle::assertCanTransition((string) $order->status, $status);
             if ($status === 'shipped') {
                 foreach ($order->items as $item) {
@@ -70,6 +75,16 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             $order = CustomerOrder::query()->where('user_id', $userId)->lockForUpdate()->find($orderId);
             if ($order === null) {
                 throw new OrderNotFoundException('Order not found.');
+            }
+            // Cancellation is idempotent: a retry must not release the same
+            // reservation again. The row lock serializes concurrent retries.
+            if ((string) $order->status === 'cancelled') {
+                return $order->fresh(['items.product', 'items.variant']);
+            }
+            // Cancellation is idempotent: a retry must not release the same
+            // reservation again. The row lock serializes concurrent retries.
+            if ((string) $order->status === 'cancelled') {
+                return $order->fresh(['items.product', 'items.variant']);
             }
             if (! OrderLifecycle::canCancel((string) $order->status)) {
                 throw new OrderActionNotAllowedException('This order can no longer be cancelled.');

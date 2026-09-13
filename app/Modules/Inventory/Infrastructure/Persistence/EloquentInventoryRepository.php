@@ -63,6 +63,8 @@ final class EloquentInventoryRepository implements InventoryRepositoryInterface
         }
 
         return DB::transaction(function () use ($productId, $variantId, $quantity): InventoryItem {
+            // Invariants: on_hand is physical stock; reserved is allocated stock;
+            // available is on_hand - reserved. A reservation only increases reserved.
             $item = $this->target($productId, $variantId);
             if ($item->available < $quantity) {
                 throw new InsufficientStockException('Insufficient available stock.');
@@ -80,6 +82,7 @@ final class EloquentInventoryRepository implements InventoryRepositoryInterface
         }
 
         return DB::transaction(function () use ($productId, $variantId, $quantity): InventoryItem {
+            // Release returns an allocation to available stock by reducing only reserved.
             $item = $this->target($productId, $variantId);
             if ($item->reserved < $quantity) {
                 throw new InvalidStockAdjustmentException('Cannot release more stock than reserved.');
@@ -97,6 +100,8 @@ final class EloquentInventoryRepository implements InventoryRepositoryInterface
         }
 
         return DB::transaction(function () use ($productId, $variantId, $quantity, $actorId): InventoryItem {
+            // Commit converts reserved stock to sold stock: decrement both on_hand
+            // and reserved. Repeating it cannot succeed after the first commit.
             $item = $this->target($productId, $variantId);
             if ($item->reserved < $quantity || $item->on_hand < $quantity) {
                 throw new InsufficientStockException('Cannot commit more stock than reserved.');
