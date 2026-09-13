@@ -45,6 +45,7 @@
             "@php artisan dev"
         ],
         "test": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
         ],
