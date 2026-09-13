@@ -6,6 +6,9 @@ use App\Models\CustomerOrder;
 use App\Models\Payment;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\InventoryItem;
+use App\Models\Product;
+use App\Modules\Payment\Application\UseCases\AbandonPayment;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -77,6 +80,35 @@ final class PaymentApiTest extends TestCase
         $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'refunded']);
         $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/refund")
             ->assertConflict();
+    }
+
+    public function test_abandoned_processing_payment_cancels_order_and_releases_inventory(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $customer = $this->userWithRole('customer');
+        $product = Product::query()->create([
+            'name' => 'Reserved Payment Product', 'slug' => 'reserved-payment-product',
+            'type' => 'simple', 'status' => 'active', 'price' => 1000,
+        ]);
+        $inventory = InventoryItem::query()->create([
+            'product_id' => $product->id, 'on_hand' => 1, 'reserved' => 1,
+        ]);
+        $order = $this->orderFor($customer, 1000);
+        $order->items()->create([
+            'product_id' => $product->id, 'name' => $product->name,
+            'quantity' => 1, 'unit_price' => 1000, 'total_amount' => 1000,
+        ]);
+        $payment = Payment::query()->create([
+            'order_id' => $order->id, 'user_id' => $customer->id, 'method' => 'paymob',
+            'amount' => 1000, 'currency' => 'EGP', 'status' => 'processing',
+            'idempotency_key' => 'abandoned-payment',
+        ]);
+
+        app(AbandonPayment::class)->execute($payment->id);
+
+        $this->assertDatabaseHas('payments', ['id' => $payment->id, 'status' => 'abandoned']);
+        $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'cancelled']);
+        $this->assertDatabaseHas('inventory_items', ['id' => $inventory->id, 'reserved' => 0]);
     }
 
     private function orderFor(User $user, int $amount): CustomerOrder

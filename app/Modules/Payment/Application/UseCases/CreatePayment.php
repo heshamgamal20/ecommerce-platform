@@ -106,6 +106,9 @@ final class CreatePayment
                     'Your payment could not be completed. Please try again.',
                 );
             }
+            if ($exception instanceof PaymentFailedException) {
+                $this->orders->cancel((int) $order->id);
+            }
             throw $exception;
         }
 
