@@ -43,7 +43,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('customer/preferences', [CustomerFeaturesController::class, 'preferences'])->name('customer.preferences.show');
     Route::put('customer/preferences', [CustomerFeaturesController::class, 'updatePreferences'])->name('customer.preferences.update');
     Route::get('customer/notifications', [CustomerFeaturesController::class, 'notifications'])->name('customer.notifications.index');
+    Route::get('customer/notifications/count', [CustomerFeaturesController::class, 'notificationCount'])->name('customer.notifications.count');
     Route::patch('customer/notifications/{notificationId}/read', [CustomerFeaturesController::class, 'readNotification'])->name('customer.notifications.read');
+    Route::patch('customer/notifications/read-all', [CustomerFeaturesController::class, 'readAllNotifications'])->name('customer.notifications.read-all');
     Route::get('products/{productId}/reviews', [ProductReviewController::class, 'index'])->name('customer.reviews.index');
     Route::post('products/{productId}/reviews', [ProductReviewController::class, 'store'])->name('customer.reviews.store');
     Route::get('reviews', [ProductReviewController::class, 'adminIndex'])->name('reviews.index');

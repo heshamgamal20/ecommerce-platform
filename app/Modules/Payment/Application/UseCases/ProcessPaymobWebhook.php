@@ -10,6 +10,7 @@ use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
 use App\Modules\Payment\Domain\Contracts\PaymobWebhookVerifierInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentWebhookEventRepositoryInterface;
+use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterface;
 
 final class ProcessPaymobWebhook
 {
@@ -20,6 +21,7 @@ final class ProcessPaymobWebhook
         private readonly TransactionManagerInterface $transactions,
         private readonly PaymobWebhookVerifierInterface $verifier,
         private readonly PaymentWebhookEventRepositoryInterface $events,
+        private readonly CustomerNotificationRepositoryInterface $notifications,
     ) {
     }
 
@@ -84,6 +86,15 @@ final class ProcessPaymobWebhook
             $this->operations->complete((int) $updated->id, 'create', $status === 'confirmed' ? 'confirmed' : ($status === 'failed' ? 'failed' : ($status === 'provider_created' ? 'provider_created' : 'processing')), $reference, $payload);
             if ($status === 'confirmed' && $updated->order->status === 'pending') {
                 $this->orders->updateStatus((int) $updated->order_id, 'confirmed');
+            }
+            if ($payment->status !== $status && isset($updated->user_id)) {
+                $successful = $status === 'confirmed';
+                $this->notifications->createForUser(
+                    (int) $updated->user_id,
+                    $successful ? 'payment.succeeded' : 'payment.failed',
+                    $successful ? 'Payment successful' : 'Payment failed',
+                    $successful ? 'Your payment has been confirmed successfully.' : 'Your payment could not be completed. Please try again.',
+                );
             }
             $this->events->markProcessed('paymob', $eventId);
             return $updated;

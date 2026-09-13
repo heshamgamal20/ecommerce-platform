@@ -6,6 +6,7 @@ use App\Modules\Shipping\Domain\Contracts\ShipmentRepositoryInterface;
 use App\Modules\Shipping\Domain\Contracts\ShipmentOperationRepositoryInterface;
 use App\Modules\Shipping\Domain\Contracts\ShippingWebhookEventRepositoryInterface;
 use App\Modules\Shipping\Domain\Exceptions\ShippingException;
+use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterface;
 
 final class ProcessBostaWebhook
 {
@@ -13,6 +14,7 @@ final class ProcessBostaWebhook
         private readonly ShipmentRepositoryInterface $shipments,
         private readonly ShipmentOperationRepositoryInterface $operations,
         private readonly ShippingWebhookEventRepositoryInterface $events,
+        private readonly CustomerNotificationRepositoryInterface $notifications,
     )
     {
     }
@@ -63,6 +65,19 @@ final class ProcessBostaWebhook
         try {
             $updated = $this->shipments->updateProviderStatus($shipment, $status, $note);
             $this->operations->complete((int) $updated->id, 'create', in_array($status, ['delivered', 'cancelled'], true) ? 'confirmed' : $status, $reference, $payload);
+            if ($shipment->status !== $status && isset($updated->user_id)) {
+                $labels = [
+                    'picked_up' => ['shipment.picked_up', 'Shipment picked up', 'The carrier has picked up your shipment.'],
+                    'in_transit' => ['shipment.in_transit', 'Shipment in transit', 'Your shipment is on its way.'],
+                    'out_for_delivery' => ['shipment.out_for_delivery', 'Out for delivery', 'Your shipment is out for delivery.'],
+                    'delivered' => ['shipment.delivered', 'Shipment delivered', 'Your shipment has been delivered.'],
+                    'cancelled' => ['shipment.cancelled', 'Shipment cancelled', 'Your shipment has been cancelled.'],
+                ];
+                if (isset($labels[$status])) {
+                    [$type, $title, $body] = $labels[$status];
+                    $this->notifications->createForUser((int) $updated->user_id, $type, $title, $body);
+                }
+            }
             $this->events->markProcessed($event);
             return $updated;
         } catch (\Throwable $exception) {

@@ -14,6 +14,7 @@ use App\Modules\Payment\Domain\Exceptions\PaymentFailedException;
 use App\Modules\Payment\Domain\Exceptions\PaymentInProgressException;
 use App\Modules\Payment\Domain\ValueObjects\PaymentData;
 use App\Modules\Shared\Domain\Contracts\OutboxEventRepositoryInterface;
+use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterface;
 use Illuminate\Support\Str;
 
 final class CreatePayment
@@ -25,6 +26,7 @@ final class CreatePayment
         private readonly PaymentOperationRepositoryInterface $operations,
         private readonly OutboxEventRepositoryInterface $outbox,
         private readonly PaymentGatewayInterface $gateway,
+        private readonly CustomerNotificationRepositoryInterface $notifications,
     ) {}
 
     public function execute(int $orderId, PaymentData $data): object
@@ -95,6 +97,14 @@ final class CreatePayment
                     'reconciliation_required' => ! ($exception instanceof PaymentFailedException),
                 ],
             ]);
+            if ($exception instanceof PaymentFailedException) {
+                $this->notifications->createForUser(
+                    (int) $claim->payment->user_id,
+                    'payment.failed',
+                    'Payment failed',
+                    'Your payment could not be completed. Please try again.',
+                );
+            }
             throw $exception;
         }
 

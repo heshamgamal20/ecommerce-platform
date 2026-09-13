@@ -139,6 +139,8 @@ class ApiAuthorizationTest extends TestCase
             ['GET', '/api/v1/customer/wishlist', []],
             ['GET', '/api/v1/customer/preferences', []],
             ['GET', '/api/v1/customer/notifications', []],
+            ['GET', '/api/v1/customer/notifications/count', []],
+            ['PATCH', '/api/v1/customer/notifications/read-all', []],
         ];
     }
 

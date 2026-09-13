@@ -10,6 +10,7 @@ use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Domain\Exceptions\PaymentAmountMismatchException;
 use App\Modules\Payment\Domain\Contracts\KashierWebhookVerifierInterface;
 use App\Modules\Payment\Domain\Contracts\PaymentWebhookEventRepositoryInterface;
+use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterface;
 
 final class ProcessKashierWebhook
 {
@@ -20,6 +21,7 @@ final class ProcessKashierWebhook
         private readonly TransactionManagerInterface $transactions,
         private readonly KashierWebhookVerifierInterface $verifier,
         private readonly PaymentWebhookEventRepositoryInterface $events,
+        private readonly CustomerNotificationRepositoryInterface $notifications,
     ) {
     }
 
@@ -78,6 +80,15 @@ final class ProcessKashierWebhook
             $this->operations->complete((int) $updated->id, 'create', $status === 'confirmed' ? 'confirmed' : 'failed', (string) ($payload['transactionId'] ?? $payload['orderId'] ?? ''), $payload);
             if ($status === 'confirmed' && $updated->order->status === 'pending') {
                 $this->orders->updateStatus((int) $updated->order_id, 'confirmed');
+            }
+            if ($payment->status !== $status && isset($updated->user_id)) {
+                $successful = $status === 'confirmed';
+                $this->notifications->createForUser(
+                    (int) $updated->user_id,
+                    $successful ? 'payment.succeeded' : 'payment.failed',
+                    $successful ? 'Payment successful' : 'Payment failed',
+                    $successful ? 'Your payment has been confirmed successfully.' : 'Your payment could not be completed. Please try again.',
+                );
             }
             $this->events->markProcessed('kashier', $eventId);
             return $updated;

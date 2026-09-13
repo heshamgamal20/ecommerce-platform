@@ -24,13 +24,24 @@ final class ManageCustomerNotifications
         return $user->id;
     }
 
-    public function list(): iterable
+    /** @return iterable<int, object> */
+    public function list(bool $unreadOnly = false): iterable
     {
-        return $this->repo->listForUser($this->id());
+        return $this->repo->listForUser($this->id(), $unreadOnly);
+    }
+
+    public function unreadCount(): int
+    {
+        return $this->repo->unreadCountForUser($this->id());
     }
 
     public function read(int $id): object
     {
         return $this->repo->markAsRead($this->id(), $id);
+    }
+
+    public function readAll(): int
+    {
+        return $this->repo->markAllAsRead($this->id());
     }
 }

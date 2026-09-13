@@ -11,6 +11,7 @@ use App\Modules\Payment\Application\UseCases\CreatePayment;
 use App\Modules\Payment\Domain\ValueObjects\PaymentData;
 use App\Modules\Shipping\Application\UseCases\CreateShipment;
 use App\Modules\Shipping\Domain\ValueObjects\CreateShipmentData;
+use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterface;
 final class Checkout
 {
     public function __construct(
@@ -19,6 +20,7 @@ final class Checkout
         private readonly TransactionManagerInterface $transactions,
         private readonly CreateShipment $createShipment,
         private readonly CreatePayment $createPayment,
+        private readonly CustomerNotificationRepositoryInterface $notifications,
     ) {}
 
     public function execute(CheckoutData $data): object
@@ -58,6 +60,15 @@ final class Checkout
             ));
         }
 
-        return $user === null ? $this->orders->find($order->id) : $this->orders->findForUser($user->id, $order->id);
+        $result = $user === null ? $this->orders->find($order->id) : $this->orders->findForUser($user->id, $order->id);
+        if ($user !== null) {
+            $this->notifications->createForUser(
+                (int) $user->id,
+                'order.created',
+                'Order received',
+                'Your order has been received and is being prepared.',
+            );
+        }
+        return $result;
     }
 }

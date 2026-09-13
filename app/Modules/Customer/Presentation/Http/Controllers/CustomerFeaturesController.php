@@ -18,6 +18,8 @@ final class CustomerFeaturesController extends Controller{
  public function removeWishlist(ProductRequest $r,int $productId,ManageCustomerWishlist $u):JsonResponse{$u->remove($productId);return response()->json(null,204);}
  public function preferences(PreferencesRequest $r,ManageCustomerPreferences $u):JsonResponse{return response()->json(['data'=>$u->show()]);}
  public function updatePreferences(PreferencesRequest $r,ManageCustomerPreferences $u):JsonResponse{return response()->json(['data'=>$u->update($r->validated('data'))]);}
- public function notifications(NotificationRequest $r,ManageCustomerNotifications $u):JsonResponse{return response()->json(['data'=>$u->list()]);}
- public function readNotification(NotificationRequest $r,int $id,ManageCustomerNotifications $u):JsonResponse{return response()->json(['data'=>$u->read($id)]);}
+ public function notifications(NotificationRequest $r,ManageCustomerNotifications $u):JsonResponse{return response()->json(['data'=>$u->list((bool)$r->validated('unread',false)),'unread_count'=>$u->unreadCount()]);}
+ public function notificationCount(NotificationRequest $r,ManageCustomerNotifications $u):JsonResponse{return response()->json(['data'=>['unread_count'=>$u->unreadCount()]]);}
+ public function readNotification(NotificationRequest $r,int $notificationId,ManageCustomerNotifications $u):JsonResponse{return response()->json(['data'=>$u->read($notificationId)]);}
+ public function readAllNotifications(NotificationRequest $r,ManageCustomerNotifications $u):JsonResponse{return response()->json(['data'=>['marked_as_read'=>$u->readAll(),'unread_count'=>$u->unreadCount()]]);}
 }

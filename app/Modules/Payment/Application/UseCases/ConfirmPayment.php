@@ -11,6 +11,7 @@ use App\Modules\Payment\Domain\Contracts\PaymentRepositoryInterface;
 use App\Modules\Payment\Domain\Exceptions\InvalidPaymentTransitionException;
 use App\Modules\Payment\Domain\Exceptions\PaymentException;
 use App\Modules\Payment\Domain\Exceptions\PaymentFailedException;
+use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterface;
 
 final class ConfirmPayment
 {
@@ -19,6 +20,7 @@ final class ConfirmPayment
         private readonly PaymentGatewayInterface $gateway,
         private readonly OrderRepositoryInterface $orders,
         private readonly TransactionManagerInterface $transactions,
+        private readonly CustomerNotificationRepositoryInterface $notifications,
     ) {}
 
     public function execute(int $paymentId): object
@@ -49,6 +51,15 @@ final class ConfirmPayment
                 $this->orders->updateStatus($order->id, 'confirmed');
             }
             AuditLog::query()->create(['actor_id' => auth()->id(), 'action' => 'payment.confirmed', 'target_type' => get_class($confirmed), 'target_id' => $confirmed->id, 'metadata' => ['provider_reference' => $confirmed->provider_reference]]);
+
+            if (isset($confirmed->user_id)) {
+                $this->notifications->createForUser(
+                    (int) $confirmed->user_id,
+                    'payment.succeeded',
+                    'Payment successful',
+                    'Your payment has been confirmed successfully.',
+                );
+            }
 
             return $confirmed;
         });
