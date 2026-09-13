@@ -98,9 +98,14 @@ final class BackupDatabase extends Command
         $process = new Process(['bash', $script], base_path(), $environment);
         $process->setTimeout(3600);
         $process->run(function (string $type, string $buffer): void {
-            $type === Process::ERR ? $this->output->writeError($buffer) : $this->output->write($buffer);
-        });
+                if ($type === Process::ERR) {
+                        $this->components->error(trim($buffer));
+                                return;
+                                    }
 
+                                        $this->output->write($buffer);
+                                        });
+        
         if (! $process->isSuccessful()) {
             $this->components->error("{$driver} backup failed. Check the command output and application logs.");
 
