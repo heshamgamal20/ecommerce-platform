@@ -13,13 +13,13 @@ final class ListCustomerOrders
         private readonly OrderRepositoryInterface $orders,
     ) {}
 
-    public function execute(): iterable
+    public function execute(int $perPage = 25): iterable
     {
         $user = $this->authentication->user();
         if ($user === null) {
             throw new AuthenticationException('Unauthenticated.');
         }
 
-        return $this->orders->listForUser($user->id);
+        return $this->orders->listForUser($user->id, $perPage);
     }
 }

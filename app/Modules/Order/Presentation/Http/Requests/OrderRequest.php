@@ -29,6 +29,9 @@ final class OrderRequest extends FormRequest
 
     public function rules(): array
     {
+        if (in_array($this->route()?->getName(), ['orders.index', 'customer.orders.index'], true)) {
+            return ['per_page' => ['sometimes', 'integer', 'min:1', 'max:100']];
+        }
         if ($this->route()?->getName() !== 'orders.status') {
             return [];
         }

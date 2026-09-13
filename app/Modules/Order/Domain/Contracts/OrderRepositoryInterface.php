@@ -6,9 +6,9 @@ interface OrderRepositoryInterface
 {
 
 
-    public function listForUser(int $userId): iterable;
+    public function listForUser(int $userId, int $perPage = 25): iterable;
 
-    public function listAll(): iterable;
+    public function listAll(int $perPage = 25): iterable;
 
     public function findForUser(int $userId, int $orderId): object;
 

@@ -15,14 +15,14 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
     public function __construct(private readonly InventoryRepositoryInterface $inventory) {}
 
 
-    public function listForUser(int $userId): iterable
+    public function listForUser(int $userId, int $perPage = 25): iterable
     {
-        return CustomerOrder::query()->with('items.product')->where('user_id', $userId)->latest()->get();
+        return CustomerOrder::query()->with('items.product')->where('user_id', $userId)->latest()->paginate(min(max($perPage, 1), 100));
     }
 
-    public function listAll(): iterable
+    public function listAll(int $perPage = 25): iterable
     {
-        return CustomerOrder::query()->with(['user', 'items.product'])->latest()->get();
+        return CustomerOrder::query()->with(['user', 'items.product'])->latest()->paginate(min(max($perPage, 1), 100));
     }
 
     public function findForUser(int $userId, int $orderId): object

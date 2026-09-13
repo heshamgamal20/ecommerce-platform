@@ -33,7 +33,16 @@ final class CustomerFeaturesApiTest extends TestCase {
  public function test_customer_can_list_only_own_orders_and_guests_are_rejected():void{
   $this->getJson('/api/v1/customer/orders')->assertUnauthorized();
   CustomerOrder::query()->create(['user_id'=>$this->customer->id,'status'=>'pending','total_amount'=>100]);$other=User::factory()->create();CustomerOrder::query()->create(['user_id'=>$other->id,'status'=>'pending','total_amount'=>200]);
-  $this->actingAs($this->customer)->getJson('/api/v1/customer/orders')->assertOk()->assertJsonCount(1,'data');
+  $this->actingAs($this->customer)->getJson('/api/v1/customer/orders')->assertOk()->assertJsonCount(1,'data.data')->assertJsonPath('data.per_page',25);
+ }
+
+ public function test_order_lists_are_paginated_and_page_size_is_capped():void{
+  CustomerOrder::query()->create(['user_id'=>$this->customer->id,'status'=>'pending','total_amount'=>100]);
+  $this->actingAs($this->customer)->getJson('/api/v1/customer/orders?per_page=101')->assertUnprocessable()->assertJsonValidationErrors('per_page');
+  $this->actingAs($this->customer)->getJson('/api/v1/customer/orders?per_page=1')->assertOk()->assertJsonPath('data.per_page',1)->assertJsonPath('data.total',1);
+  $admin=User::factory()->create();$admin->roles()->attach(Role::query()->where('slug','admin')->firstOrFail());
+  CustomerOrder::query()->create(['user_id'=>$this->customer->id,'status'=>'pending','total_amount'=>200]);
+  $this->actingAs($admin)->getJson('/api/v1/orders?per_page=1')->assertOk()->assertJsonPath('data.per_page',1)->assertJsonPath('data.total',2);
  }
 
  public function test_address_default_is_unique_promoted_and_validated():void{

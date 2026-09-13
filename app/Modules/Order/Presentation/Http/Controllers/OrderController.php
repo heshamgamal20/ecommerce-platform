@@ -16,7 +16,7 @@ final class OrderController extends Controller
 {
     public function customerIndex(OrderRequest $request, ListCustomerOrders $orders): JsonResponse
     {
-        return response()->json(['data' => $orders->execute()]);
+        return response()->json(['data' => $orders->execute((int) $request->validated('per_page', 25))]);
     }
 
     public function customerShow(OrderRequest $request, int $id, GetCustomerOrder $order): JsonResponse
@@ -31,7 +31,7 @@ final class OrderController extends Controller
 
     public function index(OrderRequest $request, ListOrders $orders): JsonResponse
     {
-        return response()->json(['data' => $orders->execute()]);
+        return response()->json(['data' => $orders->execute((int) $request->validated('per_page', 25))]);
     }
 
     public function show(OrderRequest $request, int $id, GetOrder $order): JsonResponse
