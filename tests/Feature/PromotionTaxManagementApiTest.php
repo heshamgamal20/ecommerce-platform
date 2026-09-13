@@ -32,6 +32,12 @@ final class PromotionTaxManagementApiTest extends TestCase
         $customer->roles()->attach(Role::query()->where('slug', 'customer')->firstOrFail());
         $this->actingAs($customer)->getJson('/api/v1/coupons')->assertForbidden();
         $this->actingAs($customer)->getJson('/api/v1/tax-rules')->assertForbidden();
+        $this->actingAs($customer)->postJson('/api/v1/tax-rules', ['name' => 'Forbidden', 'country' => 'EG', 'rate' => 10])->assertForbidden();
+
+        $tax = \App\Models\TaxRule::query()->create(['name' => 'Protected VAT', 'country' => 'EG', 'rate' => 14, 'is_active' => true]);
+        $this->actingAs($customer)->getJson('/api/v1/tax-rules/'.$tax->id)->assertForbidden();
+        $this->actingAs($customer)->patchJson('/api/v1/tax-rules/'.$tax->id, ['rate' => 20])->assertForbidden();
+        $this->actingAs($customer)->deleteJson('/api/v1/tax-rules/'.$tax->id)->assertForbidden();
     }
 
     public function test_coupon_management_validates_business_values_and_usage_limits_are_enforced(): void
