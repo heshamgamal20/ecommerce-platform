@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\CustomerOrder;
+use App\Modules\Order\Domain\OrderPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(CustomerOrder::class, OrderPolicy::class);
         RateLimiter::for('api', static fn (Request $request): Limit => Limit::perMinute(max(1, (int) config('app.api_rate_limit', 120)))
             ->by((string) ($request->user()?->id ?? $request->ip())));
         RateLimiter::for('auth-register', static fn (Request $request): Limit => Limit::perMinute(3)->by($request->ip()));

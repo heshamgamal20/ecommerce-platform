@@ -9,7 +9,7 @@ use App\Modules\Promotion\Domain\Contracts\CouponServiceInterface;
 use App\Modules\Tax\Domain\Contracts\TaxCalculatorInterface;
 use App\Modules\Order\Domain\Contracts\OrderRepositoryInterface;
 use App\Modules\Order\Domain\Exceptions\CheckoutException;
-use App\Modules\Order\Domain\Exceptions\InvalidOrderStatusTransitionException;
+use App\Modules\Order\Domain\OrderLifecycle;
 use App\Modules\Order\Domain\Exceptions\OrderActionNotAllowedException;
 use App\Modules\Order\Domain\Exceptions\OrderNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -59,18 +59,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             if ($order === null) {
                 throw new OrderNotFoundException('Order not found.');
             }
-            $allowed = [
-                'pending' => ['confirmed', 'cancelled'],
-                'confirmed' => ['processing', 'cancelled'],
-                'processing' => ['shipped', 'cancelled'],
-                'shipped' => ['delivered'],
-                'delivered' => ['refunded'],
-                'cancelled' => [],
-                'refunded' => [],
-            ];
-            if (! in_array($status, $allowed[$order->status] ?? [], true)) {
-                throw InvalidOrderStatusTransitionException::from($order->status, $status);
-            }
+            OrderLifecycle::assertCanTransition((string) $order->status, $status);
             if ($status === 'shipped') {
                 foreach ($order->items as $item) {
                     $this->inventory->commit($item->product_id, $item->variant_id, $item->quantity);
@@ -89,7 +78,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             if ($order === null) {
                 throw new OrderNotFoundException('Order not found.');
             }
-            if (! in_array($order->status, ['pending', 'confirmed', 'processing'], true)) {
+            if (! OrderLifecycle::canCancel((string) $order->status)) {
                 throw new OrderActionNotAllowedException('This order can no longer be cancelled.');
             }
             foreach ($order->items as $item) {
@@ -108,7 +97,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             if ($order === null) {
                 throw new OrderNotFoundException('Order not found.');
             }
-            if (! in_array($order->status, ['pending', 'confirmed', 'processing'], true)) {
+            if (! OrderLifecycle::canCancel((string) $order->status)) {
                 throw new OrderActionNotAllowedException('This order can no longer be cancelled.');
             }
             foreach ($order->items as $item) {
