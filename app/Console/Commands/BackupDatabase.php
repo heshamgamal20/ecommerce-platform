@@ -38,22 +38,56 @@ final class BackupDatabase extends Command
             return self::FAILURE;
         }
 
-        $required = match ($driver) {
-            'sqlite' => ['BACKUP_DIR', 'DB_DATABASE'],
-            default => ['BACKUP_DIR', 'DB_HOST', 'DB_DATABASE', 'DB_USERNAME'],
-        };
-        foreach ($required as $name) {
-            if (trim((string) env($name, '')) === '') {
-                $this->components->error("{$name} is required for {$driver} backup.");
+        $connection = (array) config("database.connections.{$driver}", []);
+        $database = trim((string) ($connection['database'] ?? ''));
+        $backupDirectory = trim((string) config('backup.directory', storage_path('app/backups')));
 
-                return self::FAILURE;
+        if ($backupDirectory === '') {
+            $this->components->error('BACKUP_DIR cannot be empty.');
+
+            return self::FAILURE;
+        }
+
+        if (! is_dir($backupDirectory) && ! mkdir($backupDirectory, 0770, true) && ! is_dir($backupDirectory)) {
+            $this->components->error("Backup directory could not be created: {$backupDirectory}");
+
+            return self::FAILURE;
+        }
+
+        if ($database === '') {
+            $this->components->error("DB_DATABASE is required for {$driver} backup.");
+
+            return self::FAILURE;
+        }
+
+        if ($driver === 'sqlite' && ! is_file($database)) {
+            $this->components->error("SQLite database file does not exist: {$database}. Run php artisan migrate first.");
+
+            return self::FAILURE;
+        }
+
+        if ($driver !== 'sqlite') {
+            foreach (['host', 'database', 'username'] as $key) {
+                if (trim((string) ($connection[$key] ?? '')) === '') {
+                    $this->components->error(strtoupper($key === 'host' ? 'DB_HOST' : ($key === 'username' ? 'DB_USERNAME' : 'DB_DATABASE'))." is required for {$driver} backup.");
+
+                    return self::FAILURE;
+                }
             }
         }
 
         $environment = array_merge(getenv() ?: [], [
+            'BACKUP_DIR' => $backupDirectory,
             'BACKUP_RETENTION_DAYS' => (string) $settings->retentionDays(),
             'DB_CONNECTION' => $driver,
+            'DB_DATABASE' => $database,
         ]);
+
+        foreach (['host' => 'DB_HOST', 'port' => 'DB_PORT', 'username' => 'DB_USERNAME', 'password' => 'DB_PASSWORD'] as $key => $variable) {
+            if (array_key_exists($key, $connection) && $connection[$key] !== null) {
+                $environment[$variable] = (string) $connection[$key];
+            }
+        }
 
         if ($this->option('dry-run')) {
             $this->components->info("{$driver} backup configuration is valid. No backup was created.");

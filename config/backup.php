@@ -4,6 +4,7 @@ return [
     'enabled' => (bool) env('BACKUP_ENABLED', false),
     'schedule' => env('BACKUP_SCHEDULE', '02:00'),
     'retention_days' => (int) env('BACKUP_RETENTION_DAYS', 14),
+    'directory' => env('BACKUP_DIR', storage_path('app/backups')),
     'scripts' => [
         'pgsql' => base_path('scripts/backup_postgres.sh'),
         'mysql' => base_path('scripts/backup_mysql.sh'),

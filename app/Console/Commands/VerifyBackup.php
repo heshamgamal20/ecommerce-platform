@@ -14,9 +14,9 @@ final class VerifyBackup extends Command
 
     public function handle(BackupSettings $settings): int
     {
-        $directory = trim((string) env('BACKUP_DIR', ''));
+        $directory = trim((string) config('backup.directory', storage_path('app/backups')));
         if ($directory === '' || ! is_dir($directory)) {
-            $this->components->error('BACKUP_DIR is missing or does not exist.');
+            $this->components->error("Backup directory is missing or does not exist: {$directory}");
 
             return self::FAILURE;
         }
