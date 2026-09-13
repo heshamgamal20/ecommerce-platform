@@ -82,6 +82,10 @@ final class ProcessPaymobWebhook
 
         $result = $this->transactions->run(function () use ($payment, $status, $metadata, $eventId, $reference, $payload): object {
             $locked = $this->payments->findForUpdate((int) $payment->id);
+            if ((string) $locked->status === 'refunded' || ((string) $locked->status === $status && $status !== 'confirmed')) {
+                $this->events->markProcessed('paymob', $eventId);
+                return $locked;
+            }
             $updated = $this->payments->updateStatus($locked, $status, ['metadata' => $metadata]);
             $this->operations->complete((int) $updated->id, 'create', $status === 'confirmed' ? 'confirmed' : ($status === 'failed' ? 'failed' : ($status === 'provider_created' ? 'provider_created' : 'processing')), $reference, $payload);
             if ($status === 'confirmed' && $updated->order->status === 'pending') {

@@ -57,6 +57,9 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             if ((string) $order->status === $status) {
                 return $order->fresh(['user', 'items.product']);
             }
+            if ($status === 'refunded') {
+                throw new OrderActionNotAllowedException('Orders can only be refunded through a confirmed payment refund.');
+            }
             OrderLifecycle::assertCanTransition((string) $order->status, $status);
             if ($status === 'shipped') {
                 foreach ($order->items as $item) {
@@ -141,9 +144,10 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             if ($order === null) {
                 throw new OrderNotFoundException('Order not found.');
             }
-            if (in_array($order->status, ['cancelled', 'refunded'], true)) {
-                throw new OrderActionNotAllowedException('This order cannot be refunded.');
+            if ((string) $order->status === 'refunded') {
+                return $order->fresh(['items.product']);
             }
+            OrderLifecycle::assertCanTransition((string) $order->status, 'refunded');
             $order->update(['status' => 'refunded']);
 
             return $order->fresh(['items.product']);

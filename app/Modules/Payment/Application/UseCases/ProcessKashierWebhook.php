@@ -76,6 +76,10 @@ final class ProcessKashierWebhook
 
         return $this->transactions->run(function () use ($payment, $status, $metadata, $eventId, $payload): object {
             $locked = $this->payments->findForUpdate((int) $payment->id);
+            if ((string) $locked->status === 'refunded' || ((string) $locked->status === $status && $status !== 'confirmed')) {
+                $this->events->markProcessed('kashier', $eventId);
+                return $locked;
+            }
             $updated = $this->payments->updateStatus($locked, $status, ['metadata' => $metadata]);
             $this->operations->complete((int) $updated->id, 'create', $status === 'confirmed' ? 'confirmed' : 'failed', (string) ($payload['transactionId'] ?? $payload['orderId'] ?? ''), $payload);
             if ($status === 'confirmed' && $updated->order->status === 'pending') {

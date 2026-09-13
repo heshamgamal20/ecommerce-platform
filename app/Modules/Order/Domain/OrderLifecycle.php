@@ -9,11 +9,11 @@ final class OrderLifecycle
     /** @var array<string, list<string>> */
     private const TRANSITIONS = [
         'pending' => ['confirmed', 'cancelled'],
-        'confirmed' => ['processing', 'cancelled'],
-        'processing' => ['shipped', 'cancelled'],
-        'shipped' => ['delivered'],
+        'confirmed' => ['processing', 'cancelled', 'refunded'],
+        'processing' => ['shipped', 'cancelled', 'refunded'],
+        'shipped' => ['delivered', 'refunded'],
         'delivered' => ['refunded'],
-        'cancelled' => [],
+        'cancelled' => ['refunded'],
         'refunded' => [],
     ];
 

@@ -27,6 +27,9 @@ final class RefundPayment
     public function execute(int $paymentId): object
     {
         $payment = $this->payments->find($paymentId);
+        if ((string) $payment->status === 'refunded') {
+            return $payment;
+        }
         if (! in_array($payment->status, ['paid', 'confirmed'], true)) {
             throw InvalidPaymentTransitionException::from($payment->status, 'refunded');
         }

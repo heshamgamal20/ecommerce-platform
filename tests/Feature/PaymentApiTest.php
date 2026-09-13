@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Modules\Payment\Application\UseCases\AbandonPayment;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 final class PaymentApiTest extends TestCase
@@ -79,7 +80,27 @@ final class PaymentApiTest extends TestCase
             ->assertOk()->assertJsonPath('data.status', 'refunded');
         $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'refunded']);
         $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/refund")
-            ->assertConflict();
+            ->assertOk()->assertJsonPath('data.status', 'refunded');
+    }
+
+    public function test_refund_is_idempotent_and_can_finalize_a_cancelled_order(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $customer = $this->userWithRole('customer');
+        $owner = $this->userWithRole('owner');
+        $order = $this->orderFor($customer, 900);
+        $order->update(['status' => 'cancelled']);
+        $payment = Payment::query()->create([
+            'order_id' => $order->id, 'user_id' => $customer->id, 'method' => 'cash_on_delivery',
+            'provider_reference' => 'cancelled-refund', 'amount' => 900, 'currency' => 'EGP',
+            'status' => 'paid', 'idempotency_key' => 'cancelled-refund-payment',
+        ]);
+
+        $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/refund")
+            ->assertOk()->assertJsonPath('data.status', 'refunded');
+        $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'refunded']);
+        $this->actingAs($owner)->postJson("/api/v1/payments/{$payment->id}/refund")
+            ->assertOk()->assertJsonPath('data.status', 'refunded');
     }
 
     public function test_abandoned_processing_payment_cancels_order_and_releases_inventory(): void
@@ -107,6 +128,28 @@ final class PaymentApiTest extends TestCase
         app(AbandonPayment::class)->execute($payment->id);
 
         $this->assertDatabaseHas('payments', ['id' => $payment->id, 'status' => 'abandoned']);
+        $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'cancelled']);
+        $this->assertDatabaseHas('inventory_items', ['id' => $inventory->id, 'reserved' => 0]);
+    }
+
+    public function test_stale_pending_order_without_payment_expires_and_releases_inventory(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $customer = $this->userWithRole('customer');
+        $product = Product::query()->create([
+            'name' => 'Expired Reservation Product', 'slug' => 'expired-reservation-product',
+            'type' => 'simple', 'status' => 'active', 'price' => 400,
+        ]);
+        $inventory = InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 1, 'reserved' => 1]);
+        $order = $this->orderFor($customer, 400);
+        $order->items()->create([
+            'product_id' => $product->id, 'name' => $product->name,
+            'quantity' => 1, 'unit_price' => 400, 'total_amount' => 400,
+        ]);
+        $order->forceFill(['created_at' => now()->subMinutes(120), 'updated_at' => now()->subMinutes(120)])->save();
+
+        Artisan::call('payments:reconcile');
+
         $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'cancelled']);
         $this->assertDatabaseHas('inventory_items', ['id' => $inventory->id, 'reserved' => 0]);
     }
