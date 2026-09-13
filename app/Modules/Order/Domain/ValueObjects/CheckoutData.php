@@ -17,5 +17,6 @@ final readonly class CheckoutData
         public array $guestDetails = [],
         public bool $createAccount = false,
         public ?string $accountPassword = null,
+        public ?string $guestCheckoutToken = null,
     ) {}
 }

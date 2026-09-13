@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class CustomerOrder extends Model
 {
     protected $fillable = [
-        'user_id', 'guest_email', 'guest_phone', 'status', 'total_amount', 'subtotal_amount', 'discount_amount', 'coupon_code',
+        'user_id', 'guest_email', 'guest_phone', 'guest_checkout_token_hash', 'status', 'total_amount', 'subtotal_amount', 'discount_amount', 'coupon_code',
         'tax_amount', 'tax_rate', 'tax_rule_id', 'shipping_amount', 'currency', 'shipping_address', 'idempotency_key',
     ];
 

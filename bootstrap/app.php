@@ -20,6 +20,7 @@ use App\Modules\Inventory\Domain\Exceptions\InventoryNotFoundException;
 use App\Modules\Inventory\Domain\Exceptions\InsufficientStockException;
 use App\Modules\Inventory\Domain\Exceptions\InvalidStockAdjustmentException;
 use App\Modules\Order\Domain\Exceptions\CheckoutException;
+use App\Modules\Order\Domain\Exceptions\CheckoutIdempotencyConflictException;
 use App\Modules\Order\Domain\Exceptions\InvalidOrderStatusTransitionException;
 use App\Modules\Order\Domain\Exceptions\OrderNotFoundException;
 use App\Modules\Order\Domain\Exceptions\OrderActionNotAllowedException;
@@ -59,6 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
   $exceptions->render(function(DomainAuthorizationException|StaffActionNotAllowedException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],403);});
   $exceptions->render(function(BusinessRuleException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
   $exceptions->render(function(InsufficientStockException|InvalidStockAdjustmentException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
+  $exceptions->render(function(CheckoutIdempotencyConflictException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
   $exceptions->render(function(CheckoutException|CustomerAccountConflictException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});
   $exceptions->render(function(PaymentAlreadyProcessedException|PaymentInProgressException|InvalidPaymentTransitionException|InvalidOrderStatusTransitionException|InvalidShipmentTransitionException|OrderActionNotAllowedException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],409);});
   $exceptions->render(function(PaymentAmountMismatchException|PaymentFailedException|InvalidShippingAddressException|ShippingException|CartException $e,Request $r){if($r->is('api/*'))return response()->json(['message'=>$e->getMessage()],422);});

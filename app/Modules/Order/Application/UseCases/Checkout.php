@@ -14,6 +14,7 @@ use App\Modules\Shipping\Application\UseCases\CreateShipment;
 use App\Modules\Shipping\Domain\ValueObjects\CreateShipmentData;
 use App\Modules\Customer\Domain\Contracts\CustomerNotificationRepositoryInterface;
 use App\Modules\Customer\Domain\Contracts\CustomerAccountServiceInterface;
+use Illuminate\Support\Str;
 final class Checkout
 {
     public function __construct(
@@ -31,6 +32,7 @@ final class Checkout
     {
         $user = $this->authentication->user();
         $checkoutUser = $user;
+        $guestCheckoutToken = $user === null ? ($data->guestCheckoutToken ?? Str::random(64)) : null;
         if ($user === null && $data->guestItems === []) {
             throw new AuthenticationException('Unauthenticated.');
         }
@@ -40,7 +42,7 @@ final class Checkout
         // database rollback cannot undo a successful external charge.
         $shippingFee = $this->checkoutOrders->shippingFee($data->shippingMethodId, $data->currency);
 
-        $order = $this->transactions->run(function () use ($data, $user, $shippingFee, &$checkoutUser): object {
+        $order = $this->transactions->run(function () use ($data, $user, $shippingFee, $guestCheckoutToken, &$checkoutUser): object {
             if ($user === null && $data->createAccount) {
                 $accountDetails = $data->guestDetails;
                 $accountDetails['password'] = $data->accountPassword;
@@ -48,8 +50,12 @@ final class Checkout
             }
 
             $order = $user === null
-                ? $this->checkoutOrders->forGuest($data->guestItems, $data->guestDetails, $data->currency, $data->idempotencyKey, $data->couponCode, $checkoutUser?->id, $shippingFee)
+                ? $this->checkoutOrders->forGuest($data->guestItems, $data->guestDetails, $data->currency, $data->idempotencyKey, $data->couponCode, $checkoutUser?->id, $shippingFee, $guestCheckoutToken)
                 : $this->checkoutOrders->forUser($user, $data->addressId, $data->currency, $data->idempotencyKey, $data->couponCode, $shippingFee);
+
+            if ($checkoutUser === null && $guestCheckoutToken !== null) {
+                $order->setAttribute('guest_checkout_token', $guestCheckoutToken);
+            }
 
             if ($data->shippingMethodId !== null) {
                 $shipment = $this->createShipment->execute($order->id, new CreateShipmentData(
@@ -75,6 +81,9 @@ final class Checkout
         }
 
         $result = $checkoutUser === null ? $this->orders->find($order->id) : $this->orders->findForUser($checkoutUser->id, $order->id);
+        if ($checkoutUser === null && $guestCheckoutToken !== null) {
+            $result->setAttribute('guest_checkout_token', $guestCheckoutToken);
+        }
         if ($checkoutUser !== null) {
             $this->notifications->createForUser(
                 (int) $checkoutUser->id,

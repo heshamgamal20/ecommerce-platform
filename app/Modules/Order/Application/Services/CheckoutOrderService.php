@@ -6,6 +6,7 @@ use App\Modules\Inventory\Domain\Contracts\InventoryRepositoryInterface;
 use App\Modules\Order\Domain\Contracts\CheckoutOrderWriterInterface;
 use App\Modules\Order\Domain\Contracts\PricingCalculatorInterface;
 use App\Modules\Order\Domain\Exceptions\CheckoutException;
+use App\Modules\Order\Domain\Exceptions\CheckoutIdempotencyConflictException;
 use App\Modules\Promotion\Domain\Contracts\CouponServiceInterface;
 use App\Modules\Tax\Domain\Contracts\TaxCalculatorInterface;
 use App\Modules\Shipping\Domain\Contracts\ShippingMethodRepositoryInterface;
@@ -49,10 +50,22 @@ final class CheckoutOrderService
         return $order;
     }
 
-    public function forGuest(array $input, array $details, string $currency, ?string $idempotencyKey, ?string $couponCode, ?int $userId = null, int $shippingFee = 0): object
+    public function forGuest(array $input, array $details, string $currency, ?string $idempotencyKey, ?string $couponCode, ?int $userId = null, int $shippingFee = 0, ?string $guestCheckoutToken = null): object
     {
         $existing = $this->orders->findByIdempotencyKey($idempotencyKey);
-        if ($existing !== null) return $existing;
+        if ($existing !== null) {
+            if ((int) ($existing->user_id ?? 0) !== (int) ($userId ?? 0)) {
+                throw new CheckoutIdempotencyConflictException();
+            }
+            if ($userId === null && ($guestCheckoutToken === null || $existing->guest_checkout_token_hash === null
+                || ! hash_equals((string) $existing->guest_checkout_token_hash, hash('sha256', $guestCheckoutToken)))) {
+                throw new CheckoutIdempotencyConflictException();
+            }
+            if ($userId === null) {
+                $existing->setAttribute('guest_checkout_token', $guestCheckoutToken);
+            }
+            return $existing;
+        }
         $lines = [];
         foreach ($input as $item) {
             $product = $this->products->findForCheckout((int) $item['product_id']);
@@ -65,7 +78,7 @@ final class CheckoutOrderService
             'address_line1' => $details['address_line1'], 'address_line2' => $details['address_line2'] ?? null,
             'city' => $details['city'], 'state' => $details['state'] ?? null,
             'postal_code' => $details['postal_code'] ?? null, 'country' => $country,
-        ], $details['email'] ?? null, $shippingFee);
+        ], $details['email'] ?? null, $shippingFee, $guestCheckoutToken);
     }
 
     public function shippingFee(?int $shippingMethodId, string $currency): int
@@ -99,7 +112,7 @@ final class CheckoutOrderService
         )['total'];
     }
 
-    private function makeOrder(array $lines, string $currency, ?string $key, ?string $couponCode, ?int $userId, array $address, ?string $email = null, int $shippingFee = 0): object
+    private function makeOrder(array $lines, string $currency, ?string $key, ?string $couponCode, ?int $userId, array $address, ?string $email = null, int $shippingFee = 0, ?string $guestCheckoutToken = null): object
     {
         $subtotal = $this->pricing->subtotal($lines);
         $promotion = $this->coupons->apply($couponCode, (int) ($userId ?? 0), $subtotal);
@@ -112,6 +125,7 @@ final class CheckoutOrderService
             'discount_amount' => $totals['discount'], 'coupon_code' => $promotion['code'], 'tax_amount' => $tax['amount'],
             'tax_rate' => $tax['rate'], 'tax_rule_id' => $tax['rule_id'], 'shipping_amount' => $totals['shipping'], 'currency' => $currency,
             'shipping_address' => $address, 'idempotency_key' => $key,
+            'guest_checkout_token_hash' => $userId === null && $guestCheckoutToken !== null ? hash('sha256', $guestCheckoutToken) : null,
         ], $cleanLines, $promotion['code'], $promotion['discount'], $userId);
     }
 }

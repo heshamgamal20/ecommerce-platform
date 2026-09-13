@@ -79,6 +79,38 @@ final class CheckoutApiTest extends TestCase
         $this->assertDatabaseHas('inventory_items', ['product_id' => $product->id, 'reserved' => 2]);
     }
 
+    public function test_guest_idempotency_requires_the_original_checkout_token(): void
+    {
+        Setting::query()->create([
+            'group' => 'checkout', 'key' => 'checkout.require_authentication', 'value' => '0',
+            'type' => 'boolean', 'is_secret' => false, 'is_encrypted' => false,
+        ]);
+        $product = Product::query()->create([
+            'name' => 'Guest Token Product', 'slug' => 'guest-token-product',
+            'type' => 'simple', 'status' => 'active', 'price' => 800,
+        ]);
+        InventoryItem::query()->create(['product_id' => $product->id, 'on_hand' => 3, 'reserved' => 0]);
+        $payload = [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            'guest' => [
+                'name' => 'Guest Customer', 'email' => 'token@example.com', 'phone' => '01000000003',
+                'address_line1' => 'Street 1', 'city' => 'Cairo', 'country' => 'EG',
+            ],
+            'idempotency_key' => 'guest-token-checkout-1',
+        ];
+
+        $first = $this->postJson('/api/v1/customer/checkout', $payload)->assertCreated();
+        $token = $first->json('data.guest_checkout_token');
+        $this->assertIsString($token);
+        $this->assertSame(64, strlen($token));
+
+        $this->postJson('/api/v1/customer/checkout', $payload + ['guest_checkout_token' => str_repeat('x', 64)])
+            ->assertConflict();
+        $retry = $this->postJson('/api/v1/customer/checkout', $payload + ['guest_checkout_token' => $token]);
+        $retry->assertCreated()->assertJsonPath('data.id', $first->json('data.id'));
+        $this->assertDatabaseCount('customer_orders', 1);
+    }
+
     public function test_guest_can_create_customer_account_during_checkout(): void
     {
         Setting::query()->create([
