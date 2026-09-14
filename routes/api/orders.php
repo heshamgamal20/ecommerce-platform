@@ -1,10 +1,13 @@
 <?php
 
 use App\Modules\Order\Presentation\Http\Controllers\OrderController;
+use App\Modules\Order\Presentation\Http\Controllers\AdminOrderController;
 use App\Modules\Order\Presentation\Http\Controllers\ReturnController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('admin/orders', [AdminOrderController::class, 'index'])->name('admin.orders.index');
+    Route::get('admin/orders/{order}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{orderId}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{orderId}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
