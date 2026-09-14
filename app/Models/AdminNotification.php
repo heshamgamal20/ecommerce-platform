@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class AdminNotification extends Model
 {
-    protected $fillable = ['user_id', 'type', 'title', 'body', 'data', 'read_at'];
+    protected $fillable = ['user_id', 'dedupe_key', 'type', 'title', 'body', 'data', 'read_at'];
 
     protected function casts(): array
     {
