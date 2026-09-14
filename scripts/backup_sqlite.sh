@@ -26,6 +26,7 @@ else
 fi
 
 sha256sum "$output" > "$output.sha256"
+BACKUP_FILE="$output" "$(dirname "$0")/upload_backup_offsite.sh"
 find "$BACKUP_DIR" -type f -name '*.sqlite' -mtime +"$BACKUP_RETENTION_DAYS" -delete
 find "$BACKUP_DIR" -type f -name '*.sha256' -mtime +"$BACKUP_RETENTION_DAYS" -delete
 printf 'Created SQLite backup: %s\n' "$output"

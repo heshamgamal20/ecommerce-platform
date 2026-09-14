@@ -28,6 +28,7 @@ PGPASSWORD="${DB_PASSWORD:-}" pg_dump \
   "$DB_DATABASE" > "$output"
 
 sha256sum "$output" > "$output.sha256"
+BACKUP_FILE="$output" "$(dirname "$0")/upload_backup_offsite.sh"
 find "$BACKUP_DIR" -type f -name '*.dump' -mtime +"$BACKUP_RETENTION_DAYS" -delete
 find "$BACKUP_DIR" -type f -name '*.sha256' -mtime +"$BACKUP_RETENTION_DAYS" -delete
 printf 'Created backup: %s\n' "$output"

@@ -14,6 +14,8 @@ final class ProductionConfigurationTest extends TestCase
         self::assertStringContainsString('APP_DEBUG=false', $template);
         self::assertStringContainsString('SESSION_SECURE_COOKIE=true', $template);
         self::assertStringContainsString('QUEUE_CONNECTION=redis', $template);
+        self::assertStringContainsString('REDIS_QUEUE_RETRY_AFTER=150', $template);
+        self::assertStringContainsString('BACKUP_OFFSITE_ENABLED=true', $template);
         self::assertStringContainsString('/api/v1/webhooks/paymob', $template);
         self::assertStringContainsString('/api/v1/webhooks/kashier', $template);
         self::assertStringContainsString('/api/v1/webhooks/bosta', $template);
@@ -25,5 +27,7 @@ final class ProductionConfigurationTest extends TestCase
         self::assertFileExists(dirname(__DIR__, 2) . '/deploy/ecommerce-scheduler.cron');
         self::assertFileExists(dirname(__DIR__, 2) . '/deploy/supervisor/ecommerce-worker.conf');
         self::assertTrue(is_executable(dirname(__DIR__, 2) . '/scripts/backup_postgres.sh'));
+        self::assertTrue(is_executable(dirname(__DIR__, 2) . '/scripts/upload_backup_offsite.sh'));
+        self::assertTrue(is_executable(dirname(__DIR__, 2) . '/scripts/test_restore_postgres.sh'));
     }
 }

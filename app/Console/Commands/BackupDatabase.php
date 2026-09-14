@@ -79,6 +79,10 @@ final class BackupDatabase extends Command
         $environment = array_merge(getenv() ?: [], [
             'BACKUP_DIR' => $backupDirectory,
             'BACKUP_RETENTION_DAYS' => (string) $settings->retentionDays(),
+            'BACKUP_OFFSITE_ENABLED' => config('backup.offsite.enabled') ? 'true' : 'false',
+            'BACKUP_OFFSITE_BUCKET' => (string) config('backup.offsite.bucket', ''),
+            'BACKUP_OFFSITE_PREFIX' => (string) config('backup.offsite.prefix', 'ecommerce-platform/database'),
+            'BACKUP_OFFSITE_ENDPOINT' => (string) config('backup.offsite.endpoint', ''),
             'DB_CONNECTION' => $driver,
             'DB_DATABASE' => $database,
         ]);

@@ -34,6 +34,18 @@ php artisan backup:database --force
 
 لا يعتبر إنشاء backup ناجحًا دليلًا على قابلية الاستعادة. معيار الإغلاق هو restore test ناجح مع قياس RPO وRTO وتوثيق النتيجة.
 
+عند تفعيل `BACKUP_OFFSITE_ENABLED=true`، يجب تثبيت AWS CLI على خادم التطبيق أو backup runner، ومنح الهوية صلاحية كتابة bucket فقط مع تفعيل encryption وObject Lock/retention حسب سياسة المؤسسة. يفشل أمر النسخ الاحتياطي إذا تعذر رفع النسخة الخارجية، حتى لا يظهر backup محلي ناجحًا بينما النسخة الوحيدة ما زالت على نفس الخادم.
+
+نفّذ restore test شهريًا على قاعدة بيانات مؤقتة ومعزولة، وليس على production:
+
+```bash
+CONFIRM_ISOLATED_RESTORE=yes \
+RESTORE_DATABASE_URL='postgresql://restore_user:secret@restore-db/ecommerce_restore' \
+./scripts/test_restore_postgres.sh /var/backups/ecommerce-platform/ecommerce_20260914T020000Z.dump
+```
+
+سجّل وقت بدء وانتهاء الاختبار، حجم النسخة، نجاح `pg_restore`، وRPO/RTO. احتفظ بنتيجة آخر اختبار ناجح، ولا تعتبر `backup:verify` بديلًا عن restore test.
+
 ## Security checklist
 
 يجب إنهاء TLS عند reverse proxy موثوق، وتقييد `CORS_ALLOWED_ORIGINS` إلى origins الفعلية، وحماية مفاتيح providers، وتفعيل secure cookies، ومنع عرض logs أو debug traces للمستخدم، وتدوير webhook credentials عند الاشتباه في تسريبها.

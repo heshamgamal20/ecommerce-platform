@@ -29,6 +29,7 @@ MYSQL_PWD="${DB_PASSWORD:-}" mysqldump \
   "$DB_DATABASE" | gzip -c > "$output"
 
 sha256sum "$output" > "$output.sha256"
+BACKUP_FILE="$output" "$(dirname "$0")/upload_backup_offsite.sh"
 find "$BACKUP_DIR" -type f -name '*.sql.gz' -mtime +"$BACKUP_RETENTION_DAYS" -delete
 find "$BACKUP_DIR" -type f -name '*.sha256' -mtime +"$BACKUP_RETENTION_DAYS" -delete
 printf 'Created MySQL backup: %s\n' "$output"
