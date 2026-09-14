@@ -109,6 +109,8 @@ class RbacSeeder extends Seeder
             // Shipping
             ['name' => 'View Shipping', 'slug' => 'shipping.view', 'group' => 'shipping'],
             ['name' => 'Manage Shipping', 'slug' => 'shipping.manage', 'group' => 'shipping'],
+            ['name' => 'View Shipping Reports', 'slug' => 'shipping.reports.view', 'group' => 'shipping'],
+            ['name' => 'Manage Shipping Settlements', 'slug' => 'shipping.settlements.manage', 'group' => 'shipping'],
 
             // Discounts
             ['name' => 'View Discounts', 'slug' => 'discounts.view', 'group' => 'discounts'],

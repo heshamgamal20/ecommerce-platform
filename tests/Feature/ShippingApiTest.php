@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CustomerOrder;
+use App\Models\Payment;
 use App\Models\Role;
 use App\Models\Shipment;
 use App\Models\ShippingMethod;
@@ -88,6 +89,23 @@ final class ShippingApiTest extends TestCase
             ->assertOk()->assertJsonPath('data.status', 'delivered');
         $this->assertDatabaseHas('customer_orders', ['id' => $order->id, 'status' => 'delivered']);
     }
+
+    public function test_owner_can_generate_carrier_report_and_record_matching_settlement(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $owner = $this->userWithRole('owner');
+        $method = ShippingMethod::query()->create(['code' => 'bosta', 'name' => 'Bosta', 'carrier' => 'Bosta', 'base_fee' => 100, 'currency' => 'EGP', 'is_active' => true]);
+        $order = CustomerOrder::query()->create(['user_id' => $owner->id, 'status' => 'delivered', 'total_amount' => 1000, 'currency' => 'EGP', 'shipping_address' => ['city' => 'Cairo']]);
+        Payment::query()->create(['order_id' => $order->id, 'user_id' => $owner->id, 'method' => 'cash_on_delivery', 'amount' => 1000, 'currency' => 'EGP', 'status' => 'succeeded', 'idempotency_key' => 'cod-settlement-1']);
+        Shipment::query()->create(['order_id' => $order->id, 'user_id' => $owner->id, 'shipping_method_id' => $method->id, 'method_code' => 'bosta', 'fee' => 100, 'currency' => 'EGP', 'status' => 'delivered', 'address_snapshot' => ['city' => 'Cairo'], 'idempotency_key' => 'shipment-settlement-1']);
+
+        $this->actingAs($owner)->getJson('/api/v1/shipping-reports?from=2026-01-01&to=2027-01-01&carrier=Bosta')
+            ->assertOk()->assertJsonPath('data.carriers.0.gross_cod_amount', 1000)->assertJsonPath('data.carriers.0.expected_amount', 900);
+        $this->actingAs($owner)->postJson('/api/v1/shipping-settlements', [
+            'carrier' => 'Bosta', 'period_start' => '2026-01-01', 'period_end' => '2027-01-01', 'currency' => 'EGP', 'paid_amount' => 900,
+        ])->assertCreated()->assertJsonPath('data.status', 'settled')->assertJsonPath('data.difference', 0);
+    }
+
 
     private function userWithRole(string $role): User
     {
