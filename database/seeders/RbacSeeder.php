@@ -176,6 +176,7 @@ class RbacSeeder extends Seeder
             'inventory.view',
         ]);
         $managerPermissions = $allPermissions->whereIn('slug', [
+            'dashboard.view',
             'products.view', 'products.create', 'products.update', 'products.delete',
             'products.variants.view', 'products.variants.create', 'products.variants.update', 'products.variants.delete',
             'attributes.view', 'attributes.create', 'attributes.update', 'attributes.delete',
