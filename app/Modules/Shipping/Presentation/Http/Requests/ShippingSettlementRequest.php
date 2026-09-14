@@ -25,7 +25,14 @@ final class ShippingSettlementRequest extends FormRequest
         }
 
         if ($this->route()?->getName() === 'shipping-settlements.index') {
-            return ['carrier' => ['nullable', 'string', 'max:191'], 'status' => ['nullable', 'in:open,settled,disputed']];
+            return ['carrier' => ['nullable', 'string', 'max:191'], 'status' => ['nullable', 'in:open,settled,disputed,approved'], 'per_page' => ['sometimes', 'integer', 'min:1', 'max:100']];
+        }
+
+        if ($this->route()?->getName() === 'shipping-settlements.statement') {
+            return ['statement' => ['required', 'file', 'mimes:csv,txt', 'max:10240']];
+        }
+        if ($this->route()?->getName() === 'shipping-settlements.approve') {
+            return [];
         }
 
         return [

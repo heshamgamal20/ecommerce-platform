@@ -18,4 +18,6 @@ Route::middleware('auth')->group(function (): void {
     Route::get('shipping-reconciliation', [ShippingController::class, 'reconciliation'])->name('shipping-reconciliation.index');
     Route::post('shipping-settlements', [ShippingController::class, 'settlements'])->name('shipping-settlements.store');
     Route::get('shipping-settlements', [ShippingController::class, 'settlementIndex'])->name('shipping-settlements.index');
+    Route::post('shipping-settlements/{settlement}/statement', [ShippingController::class, 'statement'])->name('shipping-settlements.statement');
+    Route::post('shipping-settlements/{settlement}/approve', [ShippingController::class, 'approve'])->name('shipping-settlements.approve');
 });

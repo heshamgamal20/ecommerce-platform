@@ -10,6 +10,7 @@ use App\Models\ShippingMethod;
 use App\Models\User;
 use Database\Seeders\RbacSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 final class ShippingApiTest extends TestCase
@@ -53,16 +54,16 @@ final class ShippingApiTest extends TestCase
         $owner = $this->userWithRole('owner');
         $method = $this->actingAs($owner)->postJson('/api/v1/shipping-methods', ['code' => 'same-day', 'name' => 'Same Day', 'base_fee' => 500, 'currency' => 'EGP', 'is_active' => true])
             ->assertCreated()->json('data');
-        $this->actingAs($owner)->patchJson('/api/v1/shipping-methods/' . $method['id'], ['name' => 'Same Day Updated'])
+        $this->actingAs($owner)->patchJson('/api/v1/shipping-methods/'.$method['id'], ['name' => 'Same Day Updated'])
             ->assertOk()->assertJsonPath('data.name', 'Same Day Updated');
         $deletable = $this->actingAs($owner)->postJson('/api/v1/shipping-methods', ['code' => 'temporary', 'name' => 'Temporary', 'base_fee' => 50, 'currency' => 'EGP', 'is_active' => true])
             ->assertCreated()->json('data');
 
         $order = CustomerOrder::query()->create(['user_id' => $owner->id, 'status' => 'pending', 'total_amount' => 1000, 'currency' => 'EGP', 'shipping_address' => ['city' => 'Cairo']]);
-        $shipment = \App\Models\Shipment::query()->create(['order_id' => $order->id, 'user_id' => $owner->id, 'shipping_method_id' => $method['id'], 'method_code' => 'same-day', 'fee' => 500, 'currency' => 'EGP', 'status' => 'pending', 'address_snapshot' => ['city' => 'Cairo'], 'idempotency_key' => 'admin-shipment']);
+        $shipment = Shipment::query()->create(['order_id' => $order->id, 'user_id' => $owner->id, 'shipping_method_id' => $method['id'], 'method_code' => 'same-day', 'fee' => 500, 'currency' => 'EGP', 'status' => 'pending', 'address_snapshot' => ['city' => 'Cairo'], 'idempotency_key' => 'admin-shipment']);
         $this->actingAs($owner)->patchJson("/api/v1/shipments/{$shipment->id}/status", ['status' => 'picked_up'])
             ->assertOk()->assertJsonPath('data.status', 'picked_up');
-        $this->actingAs($owner)->deleteJson('/api/v1/shipping-methods/' . $deletable['id'])->assertNoContent();
+        $this->actingAs($owner)->deleteJson('/api/v1/shipping-methods/'.$deletable['id'])->assertNoContent();
     }
 
     public function test_delivered_shipment_completes_shipped_order(): void
@@ -108,11 +109,32 @@ final class ShippingApiTest extends TestCase
         ])->assertCreated()->assertJsonPath('data.status', 'settled')->assertJsonPath('data.difference', 0);
     }
 
+    public function test_owner_can_import_statement_detect_differences_and_approve_only_after_resolution(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $owner = $this->userWithRole('owner');
+        $method = ShippingMethod::query()->create(['code' => 'statement-carrier', 'name' => 'Statement Carrier', 'carrier' => 'Statement Carrier', 'base_fee' => 100, 'currency' => 'EGP', 'is_active' => true]);
+        $order = CustomerOrder::query()->create(['user_id' => $owner->id, 'status' => 'delivered', 'total_amount' => 1000, 'currency' => 'EGP', 'shipping_address' => ['city' => 'Cairo']]);
+        Payment::query()->create(['order_id' => $order->id, 'user_id' => $owner->id, 'method' => 'cash_on_delivery', 'amount' => 1000, 'currency' => 'EGP', 'status' => 'paid', 'idempotency_key' => 'statement-payment']);
+        $shipment = Shipment::query()->create(['order_id' => $order->id, 'user_id' => $owner->id, 'shipping_method_id' => $method->id, 'method_code' => $method->code, 'tracking_number' => 'TRK-001', 'fee' => 100, 'currency' => 'EGP', 'status' => 'delivered', 'address_snapshot' => ['city' => 'Cairo'], 'idempotency_key' => 'statement-shipment']);
+        $secondOrder = CustomerOrder::query()->create(['user_id' => $owner->id, 'status' => 'delivered', 'total_amount' => 500, 'currency' => 'EGP', 'shipping_address' => ['city' => 'Cairo']]);
+        Payment::query()->create(['order_id' => $secondOrder->id, 'user_id' => $owner->id, 'method' => 'cash_on_delivery', 'amount' => 500, 'currency' => 'EGP', 'status' => 'paid', 'idempotency_key' => 'statement-payment-2']);
+        $unreportedShipment = Shipment::query()->create(['order_id' => $secondOrder->id, 'user_id' => $owner->id, 'shipping_method_id' => $method->id, 'method_code' => $method->code, 'tracking_number' => 'TRK-UNREPORTED', 'fee' => 100, 'currency' => 'EGP', 'status' => 'delivered', 'address_snapshot' => ['city' => 'Cairo'], 'idempotency_key' => 'statement-shipment-2']);
+        $settlement = $this->actingAs($owner)->postJson('/api/v1/shipping-settlements', ['carrier' => 'Statement Carrier', 'period_start' => '2026-01-01', 'period_end' => '2026-12-31', 'currency' => 'EGP', 'paid_amount' => 900])->assertCreated()->json('data');
+
+        $csv = "tracking_number,paid_amount,status\nTRK-001,850,delivered\nTRK-MISSING,100,delivered\n";
+        $this->actingAs($owner)->post('/api/v1/shipping-settlements/'.$settlement['id'].'/statement', ['statement' => UploadedFile::fake()->createWithContent('carrier.csv', $csv)])->assertOk()->assertJsonPath('data.summary.matched', 0)->assertJsonPath('data.summary.missing', 2)->assertJsonPath('data.summary.different', 1);
+        $this->actingAs($owner)->postJson('/api/v1/shipping-settlements/'.$settlement['id'].'/approve')->assertUnprocessable();
+        $this->assertDatabaseHas('carrier_settlement_lines', ['tracking_number' => 'TRK-001', 'match_status' => 'amount_difference']);
+        $this->assertDatabaseHas('carrier_settlement_lines', ['tracking_number' => 'TRK-MISSING', 'match_status' => 'missing_shipment']);
+        $this->assertDatabaseHas('carrier_settlement_lines', ['shipment_id' => $unreportedShipment->id, 'match_status' => 'missing_in_statement']);
+    }
 
     private function userWithRole(string $role): User
     {
         $user = User::factory()->create();
         $user->roles()->attach(Role::query()->where('slug', $role)->firstOrFail());
+
         return $user;
     }
 }
