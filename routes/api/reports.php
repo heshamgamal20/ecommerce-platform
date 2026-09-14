@@ -12,4 +12,8 @@ Route::middleware('auth')->group(function (): void {
     Route::get('reports/customers', [ReportsController::class, 'customers'])->name('reports.customers');
     Route::get('reports/products', [ReportsController::class, 'products'])->name('reports.products');
     Route::get('reports/coupons', [ReportsController::class, 'coupons'])->name('reports.coupons');
+    Route::get('reports/taxes', [ReportsController::class, 'taxes'])->name('reports.taxes');
+    Route::get('reports/cashflow', [ReportsController::class, 'cashflow'])->name('reports.cashflow');
+    Route::get('reports/payment-exceptions', [ReportsController::class, 'paymentExceptions'])->name('reports.payment-exceptions');
+    Route::get('reports/operations', [ReportsController::class, 'operations'])->name('reports.operations');
 });

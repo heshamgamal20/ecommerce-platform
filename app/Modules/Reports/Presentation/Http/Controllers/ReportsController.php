@@ -8,8 +8,13 @@ use App\Models\CouponUsage;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\OrderReturn;
+use App\Models\OutboxEvent;
 use App\Models\Payment;
+use App\Models\PaymentOperation;
 use App\Models\Shipment;
+use App\Models\ShipmentOperation;
+use App\Models\CarrierSettlement;
+use Illuminate\Support\Facades\DB;
 use App\Modules\Reports\Presentation\Http\Requests\ReportRequest;
 use Illuminate\Http\JsonResponse;
 
@@ -121,6 +126,48 @@ final class ReportsController extends Controller
             return ['coupon_id' => (int) $couponId, 'code' => $rows->first()->coupon?->code, 'uses' => $rows->count(), 'discount_amount' => $rows->sum('discount_amount'), 'orders' => $rows->pluck('order_id')->filter()->unique()->count()];
         })->sortByDesc('discount_amount')->values();
         return response()->json(['data' => ['from' => $request->validated('from'), 'to' => $request->validated('to'), 'coupons' => $coupons, 'total_discount_amount' => $usages->sum('discount_amount')]]);
+    }
+
+    public function taxes(ReportRequest $request): JsonResponse
+    {
+        $orders = CustomerOrder::query()->whereBetween('created_at', $this->range($request))->whereNotIn('status', ['cancelled', 'refunded'])->get();
+        $rows = $orders->groupBy(fn ($order) => (string) ($order->tax_rule_id ?: 'rate:'.$order->tax_rate))->map(fn ($items, $key) => [
+            'tax_rule' => $key, 'rate' => (string) $items->first()->tax_rate, 'orders' => $items->count(), 'taxable_sales' => $items->sum('subtotal_amount'), 'tax_amount' => $items->sum('tax_amount'),
+        ])->values();
+        return response()->json(['data' => ['from' => $request->validated('from'), 'to' => $request->validated('to'), 'rows' => $rows, 'total_taxable_sales' => $orders->sum('subtotal_amount'), 'total_tax_amount' => $orders->sum('tax_amount')]]);
+    }
+
+    public function cashflow(ReportRequest $request): JsonResponse
+    {
+        $payments = Payment::query()->whereBetween('created_at', $this->range($request))->get();
+        $settlements = CarrierSettlement::query()->whereBetween('created_at', $this->range($request))->get();
+        $received = $payments->whereIn('status', ['confirmed', 'paid'])->sum('amount');
+        $refunded = $payments->where('status', 'refunded')->sum('amount');
+        $carrierPaid = $settlements->sum('paid_amount');
+        return response()->json(['data' => ['from' => $request->validated('from'), 'to' => $request->validated('to'),
+            'payment_received' => $received, 'payment_refunded' => $refunded, 'carrier_settlements_paid' => $carrierPaid,
+            'net_cash_movement' => $received + $carrierPaid - $refunded, 'pending_payment_amount' => $payments->whereIn('status', ['pending', 'processing', 'provider_created'])->sum('amount'),
+            'note' => 'Gateway fees and operating expenses are not available until fee fields are added to payment settlements.',
+        ]]);
+    }
+
+    public function paymentExceptions(ReportRequest $request): JsonResponse
+    {
+        $payments = Payment::query()->whereBetween('created_at', $this->range($request))->whereIn('status', ['pending', 'processing', 'provider_created', 'failed', 'abandoned'])->with('order:id,status')->get();
+        return response()->json(['data' => ['count' => $payments->count(), 'amount' => $payments->sum('amount'), 'by_status' => $payments->groupBy('status')->map(fn ($items) => ['count' => $items->count(), 'amount' => $items->sum('amount')]), 'items' => $payments->values()]]);
+    }
+
+    public function operations(ReportRequest $request): JsonResponse
+    {
+        $range = $this->range($request);
+        $outbox = OutboxEvent::query()->whereBetween('created_at', $range)->get();
+        $paymentOperations = PaymentOperation::query()->whereBetween('created_at', $range)->get();
+        $shipmentOperations = ShipmentOperation::query()->whereBetween('created_at', $range)->get();
+        return response()->json(['data' => ['outbox' => ['total' => $outbox->count(), 'by_status' => $outbox->groupBy('status')->map->count(), 'dead_lettered' => $outbox->where('status', 'dead_lettered')->count()],
+            'payment_operations' => ['total' => $paymentOperations->count(), 'by_status' => $paymentOperations->groupBy('status')->map->count(), 'failed' => $paymentOperations->where('status', 'failed')->count()],
+            'shipment_operations' => ['total' => $shipmentOperations->count(), 'by_status' => $shipmentOperations->groupBy('status')->map->count(), 'failed' => $shipmentOperations->where('status', 'failed')->count()],
+            'failed_jobs' => DB::table('failed_jobs')->whereBetween('failed_at', $range)->count(),
+        ]]);
     }
 
     private function range(ReportRequest $request): array
