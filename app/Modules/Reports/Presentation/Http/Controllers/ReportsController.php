@@ -4,6 +4,9 @@ namespace App\Modules\Reports\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\CustomerOrder;
+use App\Models\CouponUsage;
+use App\Models\InventoryItem;
+use App\Models\InventoryMovement;
 use App\Models\OrderReturn;
 use App\Models\Payment;
 use App\Models\Shipment;
@@ -71,6 +74,53 @@ final class ReportsController extends Controller
             ];
         })->values();
         return response()->json(['data' => ['from' => $request->validated('from'), 'to' => $request->validated('to'), 'carriers' => $rows]]);
+    }
+
+    public function inventory(ReportRequest $request): JsonResponse
+    {
+        $threshold = (int) ($request->validated('threshold') ?? 5);
+        $items = InventoryItem::query()->with(['product:id,name', 'variant:id,sku'])->get();
+        return response()->json(['data' => [
+            'items' => $items->map(fn ($item) => ['product_id' => $item->product_id, 'product' => $item->product?->name,
+                'sku' => $item->variant?->sku, 'variant_id' => $item->variant_id,
+                'on_hand' => $item->on_hand, 'reserved' => $item->reserved, 'available' => $item->available,
+                'low_stock' => $item->available <= $threshold])->values(),
+            'totals' => ['items' => $items->count(), 'on_hand' => $items->sum('on_hand'), 'reserved' => $items->sum('reserved'),
+                'available' => $items->sum(fn ($item) => $item->available), 'low_stock' => $items->filter(fn ($item) => $item->available <= $threshold)->count()],
+            'threshold' => $threshold,
+            'movement_summary' => InventoryMovement::query()->whereBetween('created_at', $this->range($request))->groupBy('reason')->selectRaw('reason, COUNT(*) as count, SUM(quantity) as quantity')->get(),
+        ]]);
+    }
+
+    public function customers(ReportRequest $request): JsonResponse
+    {
+        $orders = CustomerOrder::query()->with('user:id,name,email')->whereBetween('created_at', $this->range($request))->whereNotNull('user_id')->get();
+        $customers = $orders->groupBy('user_id')->map(function ($items, $userId): array {
+            $user = $items->first()->user;
+            return ['user_id' => (int) $userId, 'name' => $user?->name, 'email' => $user?->email,
+                'orders' => $items->count(), 'total_spend' => $items->whereNotIn('status', ['cancelled', 'refunded'])->sum('total_amount'),
+                'average_order_value' => $items->count() ? (int) round($items->avg('total_amount')) : 0];
+        })->sortByDesc('total_spend')->values();
+        return response()->json(['data' => ['from' => $request->validated('from'), 'to' => $request->validated('to'), 'customers' => $customers, 'customer_count' => $customers->count()]]);
+    }
+
+    public function products(ReportRequest $request): JsonResponse
+    {
+        $items = CustomerOrder::query()->with('items.product:id,name')->whereBetween('created_at', $this->range($request))->whereNotIn('status', ['cancelled', 'refunded'])->get()->flatMap->items;
+        $products = $items->groupBy('product_id')->map(function ($rows, $productId): array {
+            $product = $rows->first()->product;
+            return ['product_id' => (int) $productId, 'name' => $product?->name, 'quantity' => $rows->sum('quantity'), 'revenue' => $rows->sum('total_amount'), 'orders' => $rows->pluck('order_id')->unique()->count()];
+        })->sortByDesc('revenue')->values();
+        return response()->json(['data' => ['from' => $request->validated('from'), 'to' => $request->validated('to'), 'products' => $products]]);
+    }
+
+    public function coupons(ReportRequest $request): JsonResponse
+    {
+        $usages = CouponUsage::query()->with('coupon:id,code,type,value')->whereBetween('created_at', $this->range($request))->get();
+        $coupons = $usages->groupBy('coupon_id')->map(function ($rows, $couponId): array {
+            return ['coupon_id' => (int) $couponId, 'code' => $rows->first()->coupon?->code, 'uses' => $rows->count(), 'discount_amount' => $rows->sum('discount_amount'), 'orders' => $rows->pluck('order_id')->filter()->unique()->count()];
+        })->sortByDesc('discount_amount')->values();
+        return response()->json(['data' => ['from' => $request->validated('from'), 'to' => $request->validated('to'), 'coupons' => $coupons, 'total_discount_amount' => $usages->sum('discount_amount')]]);
     }
 
     private function range(ReportRequest $request): array

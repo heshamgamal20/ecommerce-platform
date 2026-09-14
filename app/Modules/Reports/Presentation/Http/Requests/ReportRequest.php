@@ -21,6 +21,7 @@ final class ReportRequest extends FormRequest
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
             'carrier' => ['nullable', 'string', 'max:191'],
             'method' => ['nullable', 'string', 'max:40'],
+            'threshold' => ['sometimes', 'integer', 'min:0', 'max:1000000'],
         ];
     }
 }

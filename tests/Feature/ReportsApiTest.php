@@ -33,5 +33,9 @@ final class ReportsApiTest extends TestCase
         $this->actingAs($owner)->getJson('/api/v1/reports/payments'.$query)->assertOk()->assertJsonPath('data.count', 1);
         $this->actingAs($owner)->getJson('/api/v1/reports/returns'.$query)->assertOk()->assertJsonPath('data.count', 1);
         $this->actingAs($owner)->getJson('/api/v1/reports/carriers/performance'.$query)->assertOk()->assertJsonPath('data.carriers.0.carrier', 'Bosta');
+        $this->actingAs($owner)->getJson('/api/v1/reports/inventory'.$query)->assertOk()->assertJsonPath('data.totals.items', 0);
+        $this->actingAs($owner)->getJson('/api/v1/reports/customers'.$query)->assertOk()->assertJsonPath('data.customer_count', 1);
+        $this->actingAs($owner)->getJson('/api/v1/reports/products'.$query)->assertOk()->assertJsonPath('data.products', []);
+        $this->actingAs($owner)->getJson('/api/v1/reports/coupons'.$query)->assertOk()->assertJsonPath('data.coupons', []);
     }
 }
