@@ -3,6 +3,7 @@
 use App\Modules\Catalog\Presentation\Http\Controllers\ProductReviewController;
 use App\Modules\Customer\Presentation\Http\Controllers\CustomerController;
 use App\Modules\Customer\Presentation\Http\Controllers\CustomerFeaturesController;
+use App\Modules\Customer\Presentation\Http\Controllers\AdminCustomerController;
 use App\Modules\Order\Presentation\Http\Controllers\CheckoutController;
 use App\Modules\Order\Presentation\Http\Controllers\OrderController;
 use App\Modules\Order\Presentation\Http\Controllers\ReturnController;
@@ -15,6 +16,8 @@ Route::post('customer/checkout', CheckoutController::class)
     ->name('customer.checkout');
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('admin/customers', [AdminCustomerController::class, 'index'])->name('admin.customers.index');
+    Route::get('admin/customers/{customer}', [AdminCustomerController::class, 'show'])->name('admin.customers.show');
     Route::get('customer/profile', [CustomerController::class, 'profile'])->name('customer.profile');
     Route::match(['put', 'patch'], 'customer/profile', [CustomerController::class, 'updateProfile'])->name('customer.profile.update');
     Route::get('customer/addresses', [CustomerFeaturesController::class, 'addresses'])->name('customer.addresses.index');
