@@ -184,6 +184,7 @@ class RbacSeeder extends Seeder
             'brands.view', 'brands.create', 'brands.update', 'brands.delete',
             'categories.view', 'categories.create', 'categories.update', 'categories.delete',
             'orders.view', 'orders.manage', 'orders.verify', 'orders.confirm', 'orders.edit', 'orders.cancel',
+            'payments.view',
             'inventory.view', 'inventory.manage',
         ]);
         $supportAgentPermissions = $allPermissions->whereIn('slug', [

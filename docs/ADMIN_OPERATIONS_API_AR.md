@@ -105,3 +105,29 @@ GET /api/v1/admin/inventory/{item}/movements?reason=purchase&from=2026-09-01&to=
 تعرض الحركات، الكمية المتغيرة، الرصيد بعد الحركة، السبب، الملاحظة، والموظف الذي نفذ الحركة.
 
 تتطلب هذه APIs صلاحية `inventory.view`.
+
+## إدارة المدفوعات
+
+### قائمة المدفوعات
+
+```http
+GET /api/v1/admin/payments?q=pay-ref-1&status=failed&method=card&from=2026-09-01&to=2026-09-14
+```
+
+### تفاصيل الدفع
+
+```http
+GET /api/v1/admin/payments/{payment}
+```
+
+تعرض بيانات الدفع، الطلب والعميل، محاولات التنفيذ الآمنة، وأحداث Webhook المرتبطة. لا يتم إرجاع request/response payloads الحساسة.
+
+### استثناءات المدفوعات
+
+```http
+GET /api/v1/admin/payments/exceptions?status=failed&method=card
+```
+
+تعرض المدفوعات الفاشلة أو المتروكة، وعمليات الدفع التي فشلت أو دخلت dead-letter، وأخطاء المحاولة، بالإضافة إلى حالة دوائر حماية مزودي الدفع.
+
+تتطلب هذه APIs صلاحية `payments.view`.
