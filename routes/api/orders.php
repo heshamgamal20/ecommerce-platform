@@ -3,9 +3,14 @@
 use App\Modules\Order\Presentation\Http\Controllers\OrderController;
 use App\Modules\Order\Presentation\Http\Controllers\AdminOrderController;
 use App\Modules\Order\Presentation\Http\Controllers\ReturnController;
+use App\Modules\Order\Presentation\Http\Controllers\AdminReturnController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('admin/returns', [AdminReturnController::class, 'index'])->name('admin.returns.index');
+    Route::get('admin/returns/{return}', [AdminReturnController::class, 'show'])->name('admin.returns.show');
+    Route::post('admin/returns/{return}/receive', [AdminReturnController::class, 'receive'])->name('admin.returns.receive');
+    Route::post('admin/returns/{return}/inspect', [AdminReturnController::class, 'inspect'])->name('admin.returns.inspect');
     Route::get('admin/orders', [AdminOrderController::class, 'index'])->name('admin.orders.index');
     Route::get('admin/orders/{order}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');

@@ -159,3 +159,43 @@ GET /api/v1/admin/shipments/exceptions?carrier=Bosta&older_than_hours=48
 تعرض الشحنات الفاشلة أو الملغاة أو المفتوحة لفترة أطول من الحد المحدد، بالإضافة إلى عمليات الشحن الفاشلة أو dead-letter.
 
 تتطلب هذه APIs صلاحية `shipping.view`.
+
+## إدارة المرتجعات
+
+### قائمة المرتجعات
+
+```http
+GET /api/v1/admin/returns?q=ahmed&status=approved&inspection_status=pending&from=2026-09-01&to=2026-09-14
+```
+
+### تفاصيل المرتجع
+
+```http
+GET /api/v1/admin/returns/{return}
+```
+
+تعرض الطلب والعميل والعناصر والمبلغ المطلوب استرداده والمدفوعات المرتبطة.
+
+### تسجيل استلام المرتجع
+
+```http
+POST /api/v1/admin/returns/{return}/receive
+```
+
+يُسمح به للمرتجع المعتمد فقط، ويسجل وقت الاستلام والموظف والملاحظات.
+
+### فحص المرتجع
+
+```http
+POST /api/v1/admin/returns/{return}/inspect
+```
+
+```json
+{
+  "inspection_status": "passed",
+  "inspection_notes": "Good condition",
+  "final_refund_amount": 450
+}
+```
+
+لا يمكن أن يتجاوز `final_refund_amount` قيمة الاسترداد المطلوبة. كل عملية استلام وفحص تسجل في Audit Logs.
