@@ -39,6 +39,47 @@ final class ShippingController extends Controller
         ]]);
     }
 
+    public function reconciliation(ShippingSettlementRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $from = $data['from'].' 00:00:00';
+        $to = $data['to'].' 23:59:59';
+        $shipments = Shipment::query()->with(['method', 'order.payments', 'order.returns' => fn ($query) => $query->whereBetween('created_at', [$from, $to])])
+            ->whereBetween('created_at', [$from, $to])
+            ->when($data['carrier'] ?? null, fn ($query, $carrier) => $query->whereHas('method', fn ($method) => $method->where('carrier', $carrier)))
+            ->get();
+        $rows = [];
+        foreach ($shipments as $shipment) {
+            $carrier = (string) ($shipment->method?->carrier ?: $shipment->method_code);
+            $row = $rows[$carrier] ?? ['carrier' => $carrier, 'currency' => $shipment->currency, 'shipments' => 0, 'delivered' => 0, 'returned' => 0, 'cancelled' => 0, 'gross_cod_amount' => 0, 'collected_cod_amount' => 0, 'pending_cod_amount' => 0, 'refund_amount' => 0, 'shipping_fees' => 0, 'return_fees' => 0, 'expected_amount' => 0, 'shipment_ids' => []];
+            $order = $shipment->order;
+            $isCod = $order?->payments?->contains(fn ($payment) => $payment->method === 'cash_on_delivery');
+            $collected = $isCod ? (int) $order->payments->where('method', 'cash_on_delivery')->whereIn('status', ['succeeded', 'paid', 'confirmed'])->sum('amount') : 0;
+            $gross = $isCod && in_array($shipment->status, ['delivered', 'returned'], true) ? (int) ($order?->total_amount ?? 0) : 0;
+            $returns = ($order?->returns ?? collect())->whereNotIn('status', ['rejected', 'cancelled']);
+            $refund = $returns->whereIn('status', ['approved', 'received', 'completed', 'refunded'])->sum('refund_amount');
+            $returned = $shipment->status === 'returned' || $returns->isNotEmpty();
+            $row['shipments']++;
+            $row[$shipment->status] = ($row[$shipment->status] ?? 0) + 1;
+            if ($shipment->status === 'delivered') $row['delivered']++;
+            if ($returned) $row['returned']++;
+            if ($shipment->status === 'cancelled') $row['cancelled']++;
+            $row['gross_cod_amount'] += $gross;
+            $row['collected_cod_amount'] += $collected;
+            $row['pending_cod_amount'] += max($gross - $collected, 0);
+            $row['refund_amount'] += (int) $refund;
+            $row['shipping_fees'] += (int) $shipment->fee;
+            if ($returned) $row['return_fees'] += (int) $shipment->fee;
+            $row['shipment_ids'][] = $shipment->id;
+            $row['expected_amount'] = $row['collected_cod_amount'] - $row['shipping_fees'] - $row['return_fees'] - $row['refund_amount'];
+            $rows[$carrier] = $row;
+        }
+        $settlements = CarrierSettlement::query()->whereDate('period_start', '<=', $data['to'])->whereDate('period_end', '>=', $data['from'])
+            ->when($data['carrier'] ?? null, fn ($query, $carrier) => $query->where('carrier', $carrier))->get();
+        $settled = $settlements->groupBy('carrier')->map(fn ($items) => ['settlements' => $items->count(), 'expected_amount' => $items->sum('expected_amount'), 'paid_amount' => $items->sum('paid_amount'), 'difference' => $items->sum('difference'), 'statuses' => $items->groupBy('status')->map->count()]);
+        return response()->json(['data' => ['from' => $data['from'], 'to' => $data['to'], 'carriers' => collect($rows)->map(function (array $row) use ($settled) { $row['recorded_settlements'] = $settled->get($row['carrier'], ['settlements' => 0, 'expected_amount' => 0, 'paid_amount' => 0, 'difference' => 0, 'statuses' => []]); return $row; })->values(), 'settlements_without_shipments' => $settlements->pluck('carrier')->diff(array_keys($rows))->unique()->values()]]);
+    }
+
     public function settlements(ShippingSettlementRequest $request): JsonResponse
     {
         $settlement = DB::transaction(function () use ($request): CarrierSettlement {

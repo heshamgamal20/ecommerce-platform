@@ -11,12 +11,12 @@ final class ShippingSettlementRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->authorizePermission(in_array($this->route()?->getName(), ['shipping-reports.index', 'shipping-settlements.index'], true) ? 'shipping.reports.view' : 'shipping.settlements.manage');
+        return $this->authorizePermission(in_array($this->route()?->getName(), ['shipping-reports.index', 'shipping-reconciliation.index', 'shipping-settlements.index'], true) ? 'shipping.reports.view' : 'shipping.settlements.manage');
     }
 
     public function rules(): array
     {
-        if ($this->route()?->getName() === 'shipping-reports.index') {
+        if (in_array($this->route()?->getName(), ['shipping-reports.index', 'shipping-reconciliation.index'], true)) {
             return [
                 'from' => ['required', 'date_format:Y-m-d'],
                 'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],

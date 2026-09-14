@@ -11,6 +11,7 @@ Route::middleware('auth')->group(function (): void {
     Route::delete('shipping-methods/{shippingMethodId}', [ShippingController::class, 'destroy'])->name('shipping-methods.destroy');
     Route::patch('shipments/{shipmentId}/status', [ShippingController::class, 'status'])->name('shipments.status');
     Route::get('shipping-reports', [ShippingController::class, 'report'])->name('shipping-reports.index');
+    Route::get('shipping-reconciliation', [ShippingController::class, 'reconciliation'])->name('shipping-reconciliation.index');
     Route::post('shipping-settlements', [ShippingController::class, 'settlements'])->name('shipping-settlements.store');
     Route::get('shipping-settlements', [ShippingController::class, 'settlementIndex'])->name('shipping-settlements.index');
 });

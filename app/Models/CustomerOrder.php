@@ -25,4 +25,5 @@ class CustomerOrder extends Model
     public function payments(): HasMany { return $this->hasMany(Payment::class, 'order_id'); }
 
     public function shipments(): HasMany { return $this->hasMany(Shipment::class, 'order_id'); }
+    public function returns(): HasMany { return $this->hasMany(OrderReturn::class, 'order_id'); }
 }

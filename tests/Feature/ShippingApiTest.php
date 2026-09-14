@@ -101,6 +101,8 @@ final class ShippingApiTest extends TestCase
 
         $this->actingAs($owner)->getJson('/api/v1/shipping-reports?from=2026-01-01&to=2027-01-01&carrier=Bosta')
             ->assertOk()->assertJsonPath('data.carriers.0.gross_cod_amount', 1000)->assertJsonPath('data.carriers.0.expected_amount', 900);
+        $this->actingAs($owner)->getJson('/api/v1/shipping-reconciliation?from=2026-01-01&to=2027-01-01&carrier=Bosta')
+            ->assertOk()->assertJsonPath('data.carriers.0.collected_cod_amount', 1000)->assertJsonPath('data.carriers.0.pending_cod_amount', 0)->assertJsonPath('data.carriers.0.expected_amount', 900);
         $this->actingAs($owner)->postJson('/api/v1/shipping-settlements', [
             'carrier' => 'Bosta', 'period_start' => '2026-01-01', 'period_end' => '2027-01-01', 'currency' => 'EGP', 'paid_amount' => 900,
         ])->assertCreated()->assertJsonPath('data.status', 'settled')->assertJsonPath('data.difference', 0);
