@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Reports\Presentation\Http\Controllers\ReportsController;
+use App\Modules\Reports\Presentation\Http\Controllers\ReportExportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function (): void {
@@ -17,4 +18,6 @@ Route::middleware('auth')->group(function (): void {
     Route::get('reports/payment-exceptions', [ReportsController::class, 'paymentExceptions'])->name('reports.payment-exceptions');
     Route::get('reports/operations', [ReportsController::class, 'operations'])->name('reports.operations');
     Route::get('reports/profitability', [ReportsController::class, 'profitability'])->name('reports.profitability');
+    Route::get('reports/exports/sales.csv', [ReportExportController::class, 'sales'])->name('reports.exports.sales');
+    Route::get('reports/exports/payments.csv', [ReportExportController::class, 'payments'])->name('reports.exports.payments');
 });
