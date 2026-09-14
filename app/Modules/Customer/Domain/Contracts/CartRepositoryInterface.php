@@ -9,4 +9,5 @@ interface CartRepositoryInterface
     public function updateItem(int $userId, int $productId, ?int $variantId, int $quantity): object;
     public function removeItem(int $userId, int $productId, ?int $variantId): object;
     public function clear(int $userId): object;
+    public function listAbandoned(int $days, int $perPage): object;
 }

@@ -74,6 +74,17 @@ final class EloquentCartRepository implements CartRepositoryInterface
         return $this->touch($cart);
     }
 
+    public function listAbandoned(int $days, int $perPage): object
+    {
+        return CustomerCart::query()
+            ->with(['user:id,name,email', 'items.product:id,name,price', 'items.variant:id,product_id,name,price'])
+            ->whereNotNull('abandoned_at')
+            ->where('abandoned_at', '>=', now()->subDays($days))
+            ->whereHas('items')
+            ->latest('abandoned_at')
+            ->paginate($perPage);
+    }
+
     private function assertAvailable(int $productId, ?int $variantId, int $quantity, string $name): void
     {
         $inventory = InventoryItem::query()->where('product_id', $productId)->where('variant_id', $variantId)->first();

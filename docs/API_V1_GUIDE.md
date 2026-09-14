@@ -12,6 +12,25 @@ Content-Type: application/json
 
 The complete machine-readable contract is available in [`openapi.json`](./openapi.json).
 
+## Admin abandoned carts
+
+Use `GET /api/v1/admin/abandoned-carts` to list carts marked abandoned by the scheduled `cart:mark-abandoned` command. The endpoint requires the `customers.view` permission and supports `days` (1–365, default 30) and `per_page` (1–100, default 25) filters. Each result includes the customer, cart items, abandonment timestamp, recovery timestamp, reminder count, and totals.
+
+CSV exports are available through `GET /api/v1/reports/exports/{type}.csv` with required `from` and `to` date filters. Supported types are `sales`, `payments`, `customers`, `products`, `inventory`, `returns`, `shipments`, `settlements`, and `audit-logs`.
+
+## Invoices and credit notes
+
+Administrative invoice endpoints are available for issued orders:
+
+```http
+POST /api/v1/admin/orders/{orderId}/invoice
+GET /api/v1/admin/orders/{orderId}/invoice
+PATCH /api/v1/admin/invoices/{invoiceId}/cancel
+POST /api/v1/admin/invoices/{invoiceId}/credit-notes
+```
+
+Credit notes require an `amount` and may reference a return using `return_id`. The API rejects credit notes whose total exceeds the invoice amount and prevents cancellation after a credit note has been issued.
+
 ## Authorization
 
 Authentication and authorization are separate checks. A valid token is not sufficient for protected business operations; the authenticated user must also hold the permission declared by the operation's `x-required-permission` OpenAPI extension. Missing credentials return `401`; missing permissions return `403`.

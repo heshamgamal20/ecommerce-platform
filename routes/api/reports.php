@@ -20,4 +20,11 @@ Route::middleware('auth')->group(function (): void {
     Route::get('reports/profitability', [ReportsController::class, 'profitability'])->name('reports.profitability');
     Route::get('reports/exports/sales.csv', [ReportExportController::class, 'sales'])->name('reports.exports.sales');
     Route::get('reports/exports/payments.csv', [ReportExportController::class, 'payments'])->name('reports.exports.payments');
+    Route::get('reports/exports/customers.csv', [ReportExportController::class, 'customers'])->name('reports.exports.customers');
+    Route::get('reports/exports/products.csv', [ReportExportController::class, 'products'])->name('reports.exports.products');
+    Route::get('reports/exports/inventory.csv', [ReportExportController::class, 'inventory'])->name('reports.exports.inventory');
+    Route::get('reports/exports/returns.csv', [ReportExportController::class, 'returns'])->name('reports.exports.returns');
+    Route::get('reports/exports/shipments.csv', [ReportExportController::class, 'shipments'])->name('reports.exports.shipments');
+    Route::get('reports/exports/settlements.csv', [ReportExportController::class, 'settlements'])->name('reports.exports.settlements');
+    Route::get('reports/exports/audit-logs.csv', [ReportExportController::class, 'audit'])->name('reports.exports.audit');
 });
