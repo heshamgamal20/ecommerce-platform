@@ -80,8 +80,8 @@ final class EloquentInvoiceRepository implements InvoiceRepositoryInterface
             }
 
             $order = $invoice->order()->with(['payments', 'returns'])->first();
-            if ($order?->payments->contains(fn ($payment): bool => in_array($payment->status, ['paid', 'confirmed', 'refunded'], true))) {
-                throw new InvoiceException('Invoice with a payment cannot be cancelled.');
+            if ($order?->payments->contains(fn ($payment): bool => ! in_array($payment->status, ['failed', 'abandoned'], true))) {
+                throw new InvoiceException('Invoice with a non-final payment cannot be cancelled.');
             }
             if ($order?->returns->contains(fn ($return): bool => $return->status !== 'rejected')) {
                 throw new InvoiceException('Invoice with an active return cannot be cancelled.');
@@ -110,7 +110,11 @@ final class EloquentInvoiceRepository implements InvoiceRepositoryInterface
                 if ($return === null || (int) $return->order_id !== (int) $invoice->order_id) {
                     throw new InvoiceException('Return does not belong to the invoice order.');
                 }
-                if (! in_array($return->status, ['approved'], true) || $return->refunded_at !== null) {
+                if ($return->status !== 'approved'
+                    || $return->received_at === null
+                    || ! in_array($return->inspection_status, ['passed', 'partial'], true)
+                    || $return->final_refund_amount === null
+                    || $return->refunded_at !== null) {
                     throw new InvoiceException('Return is not eligible for a credit note.');
                 }
                 if (CreditNote::query()->where('return_id', $return->id)->exists()) {
