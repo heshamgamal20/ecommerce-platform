@@ -7,5 +7,5 @@ class StoreProductVariantRequest extends FormRequest
 {
  use AuthorizesRequest;
  public function authorize(): bool { return $this->authorizePermission('products.create'); }
- public function rules(): array { return ['sku'=>['required','string','max:191'],'price'=>['required','integer','min:0'],'compare_at_price'=>['nullable','integer','min:0'],'weight'=>['nullable','numeric','min:0'],'status'=>['required','string','max:50'],'variant_data'=>['nullable','array'],'attribute_value_ids'=>['required','array','min:1'],'attribute_value_ids.*'=>['required','integer','distinct','exists:attribute_values,id']]; }
+ public function rules(): array { return ['sku'=>['required','string','max:191'],'price'=>['required','integer','min:0'],'purchase_price'=>$this->authenticatedUser()->hasRole('owner')?['nullable','integer','min:0']:['prohibited'],'compare_at_price'=>['nullable','integer','min:0'],'weight'=>['nullable','numeric','min:0'],'status'=>['required','string','max:50'],'variant_data'=>['nullable','array'],'attribute_value_ids'=>['required','array','min:1'],'attribute_value_ids.*'=>['required','integer','distinct','exists:attribute_values,id']]; }
 }

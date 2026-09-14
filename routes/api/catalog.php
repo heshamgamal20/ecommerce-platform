@@ -15,9 +15,11 @@ Route::get('products/{productId}/variants/{variantId}', [ProductController::clas
 Route::middleware('auth')->group(function (): void {
     Route::post('products', [ProductController::class, 'store'])->name('products.store');
     Route::match(['put', 'patch'], 'products/{productId}', [ProductController::class, 'update'])->name('products.update');
+    Route::get('products/{productId}/purchase-price', [ProductController::class, 'purchasePrice'])->name('products.purchase-price');
     Route::delete('products/{productId}', [ProductController::class, 'destroy'])->name('products.destroy');
     Route::post('products/{productId}/variants', [ProductController::class, 'storeVariant'])->name('products.variants.store');
     Route::match(['put', 'patch'], 'products/{productId}/variants/{variantId}', [ProductController::class, 'updateVariant'])->name('products.variants.update');
+    Route::get('products/{productId}/variants/{variantId}/purchase-price', [ProductController::class, 'variantPurchasePrice'])->name('products.variants.purchase-price');
     Route::delete('products/{productId}/variants/{variantId}', [ProductController::class, 'destroyVariant'])->name('products.variants.destroy');
     Route::post('products/{productId}/media', [ProductMediaController::class, 'store'])->name('products.media.store');
     Route::delete('products/{productId}/media/{mediaId}', [ProductMediaController::class, 'destroy'])->name('products.media.destroy');

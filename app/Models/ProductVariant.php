@@ -12,11 +12,11 @@ class ProductVariant extends Model
     use HasFactory;
 
     protected $fillable = [
-        'product_id', 'sku', 'price', 'compare_at_price', 'weight', 'status',
+        'product_id', 'sku', 'price', 'purchase_price', 'compare_at_price', 'weight', 'status',
         'variant_data', 'combination_hash',
     ];
 
-    protected $hidden = ['combination_hash'];
+    protected $hidden = ['combination_hash', 'purchase_price'];
 
     public function product(): BelongsTo
     {
@@ -36,7 +36,7 @@ class ProductVariant extends Model
     protected function casts(): array
     {
         return [
-            'price' => 'integer',
+            'price' => 'integer', 'purchase_price' => 'encrypted:integer',
             'compare_at_price' => 'integer',
             'weight' => 'decimal:3',
             'variant_data' => 'array',

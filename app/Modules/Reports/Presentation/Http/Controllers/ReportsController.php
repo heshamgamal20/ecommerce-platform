@@ -16,6 +16,7 @@ use App\Models\ShipmentOperation;
 use App\Models\CarrierSettlement;
 use Illuminate\Support\Facades\DB;
 use App\Modules\Reports\Presentation\Http\Requests\ReportRequest;
+use App\Modules\Reports\Presentation\Http\Requests\ProfitabilityReportRequest;
 use Illuminate\Http\JsonResponse;
 
 final class ReportsController extends Controller
@@ -168,6 +169,16 @@ final class ReportsController extends Controller
             'shipment_operations' => ['total' => $shipmentOperations->count(), 'by_status' => $shipmentOperations->groupBy('status')->map->count(), 'failed' => $shipmentOperations->where('status', 'failed')->count()],
             'failed_jobs' => DB::table('failed_jobs')->whereBetween('failed_at', $range)->count(),
         ]]);
+    }
+
+    public function profitability(ProfitabilityReportRequest $request): JsonResponse
+    {
+        $orders = CustomerOrder::query()->with('items.product', 'items.variant')->whereBetween('created_at', [$request->validated('from').' 00:00:00', $request->validated('to').' 23:59:59'])->whereNotIn('status', ['cancelled', 'refunded'])->get();
+        $items = $orders->flatMap->items;
+        $costKnown = $items->filter(fn ($item) => $item->purchase_price !== null);
+        $cost = $costKnown->sum(fn ($item) => $item->quantity * (int) $item->purchase_price);
+        $revenue = $items->sum('total_amount');
+        return response()->json(['data' => ['from' => $request->validated('from'), 'to' => $request->validated('to'), 'revenue' => $revenue, 'purchase_cost' => $cost, 'gross_profit' => $revenue - $cost, 'items' => $items->count(), 'items_with_known_cost' => $costKnown->count(), 'items_missing_cost' => $items->count() - $costKnown->count(), 'complete' => $items->count() === $costKnown->count(), 'note' => 'Profitability excludes gateway fees, shipping expenses, returns, and taxes unless separately recorded.']]);
     }
 
     private function range(ReportRequest $request): array

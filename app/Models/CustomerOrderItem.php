@@ -4,15 +4,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CustomerOrderItem extends Model
 {
+    protected $hidden = ['purchase_price'];
     protected $fillable = [
         'order_id', 'product_id', 'variant_id', 'name', 'sku', 'quantity',
-        'unit_price', 'discount_amount', 'tax_amount', 'total_amount',
+        'unit_price', 'purchase_price', 'discount_amount', 'tax_amount', 'total_amount',
     ];
 
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer', 'unit_price' => 'integer',
+            'quantity' => 'integer', 'unit_price' => 'integer', 'purchase_price' => 'encrypted:integer',
             'discount_amount' => 'integer', 'tax_amount' => 'integer',
             'total_amount' => 'integer',
         ];

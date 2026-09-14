@@ -7,5 +7,5 @@ class StoreProductRequest extends FormRequest
 {
  use AuthorizesRequest;
  public function authorize(): bool { return $this->authorizePermission('products.create'); }
- public function rules(): array { return ['name'=>['required','string','max:255'],'slug'=>['nullable','string','max:191'],'description'=>['nullable','string'],'type'=>['required',Rule::in(['simple','variable'])],'status'=>['required','string','max:50'],'brand_id'=>['nullable','integer','exists:brands,id'],'category_id'=>['nullable','integer','exists:categories,id']]; }
+ public function rules(): array { return ['name'=>['required','string','max:255'],'slug'=>['nullable','string','max:191'],'description'=>['nullable','string'],'type'=>['required',Rule::in(['simple','variable'])],'status'=>['required','string','max:50'],'brand_id'=>['nullable','integer','exists:brands,id'],'category_id'=>['nullable','integer','exists:categories,id'],'purchase_price'=>$this->authenticatedUser()->hasRole('owner')?['nullable','integer','min:0']:['prohibited']]; }
 }

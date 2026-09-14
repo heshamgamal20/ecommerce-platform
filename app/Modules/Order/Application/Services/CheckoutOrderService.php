@@ -99,7 +99,8 @@ final class CheckoutOrderService
         if ($price === null || $price < 0) throw CheckoutException::missingPrice($product->name);
         $this->inventory->reserve($product->id, $variant?->id, $quantity);
         $total = $this->pricing->lineTotal($price, $quantity);
-        return ['product_id' => $product->id, 'variant_id' => $variant?->id, 'name' => $product->name, 'sku' => $variant?->sku, 'quantity' => $quantity, 'unit_price' => $price, 'discount_amount' => 0, 'tax_amount' => 0, 'total_amount' => $total, ];
+        $purchasePrice = $variant?->purchase_price ?? $product->purchase_price;
+        return ['product_id' => $product->id, 'variant_id' => $variant?->id, 'name' => $product->name, 'sku' => $variant?->sku, 'quantity' => $quantity, 'unit_price' => $price, 'purchase_price' => $purchasePrice, 'discount_amount' => 0, 'tax_amount' => 0, 'total_amount' => $total, ];
     }
 
     public function totalWithShipping(object $order, int $shipping): int

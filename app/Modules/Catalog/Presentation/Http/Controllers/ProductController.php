@@ -2,6 +2,8 @@
 namespace App\Modules\Catalog\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Modules\Catalog\Domain\ValueObjects\ProductData;
 use App\Modules\Catalog\Domain\ValueObjects\ProductVariantData;
 use App\Modules\Catalog\Domain\ValueObjects\ProductListCriteria;
@@ -20,10 +22,21 @@ use App\Modules\Catalog\Presentation\Http\Requests\StoreProductRequest;
 use App\Modules\Catalog\Presentation\Http\Requests\StoreProductVariantRequest;
 use App\Modules\Catalog\Presentation\Http\Requests\UpdateProductRequest;
 use App\Modules\Catalog\Presentation\Http\Requests\UpdateProductVariantRequest;
+use App\Modules\Catalog\Presentation\Http\Requests\PurchasePriceRequest;
 use Illuminate\Http\JsonResponse;
 
 class ProductController extends Controller
 {
+    public function purchasePrice(PurchasePriceRequest $request, int $product): JsonResponse
+    {
+        return response()->json(['data' => ['product_id' => $product, 'purchase_price' => Product::query()->findOrFail($product)->purchase_price]]);
+    }
+
+    public function variantPurchasePrice(PurchasePriceRequest $request, int $product, int $variant): JsonResponse
+    {
+        $productModel = Product::query()->findOrFail($product);
+        return response()->json(['data' => ['product_id' => $product, 'variant_id' => $variant, 'purchase_price' => ProductVariant::query()->where('product_id', $productModel->id)->findOrFail($variant)->purchase_price]]);
+    }
     public function index(CatalogActionRequest $request, ListProducts $useCase): JsonResponse
     {
         $filters = $request->validated();

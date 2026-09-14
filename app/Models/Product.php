@@ -10,14 +10,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Product extends Model
 {
     use HasFactory;
+    protected $hidden = ['purchase_price'];
 
     protected $fillable = [
-        'name', 'slug', 'description', 'type', 'status', 'price', 'brand_id', 'category_id',
+        'name', 'slug', 'description', 'type', 'status', 'price', 'purchase_price', 'brand_id', 'category_id',
     ];
 
     protected function casts(): array
     {
-        return ['price' => 'integer'];
+        return ['price' => 'integer', 'purchase_price' => 'encrypted:integer'];
     }
 
     public function brand(): BelongsTo
