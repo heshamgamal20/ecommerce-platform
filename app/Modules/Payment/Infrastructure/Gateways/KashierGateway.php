@@ -91,7 +91,7 @@ final class KashierGateway implements PaymentGatewayInterface
         return ['status' => $status, 'provider_reference' => $orderId, 'metadata' => ['provider' => 'kashier', 'reconciliation' => $response]];
     }
 
-    public function refundPayment(object $payment): array
+    public function refundPayment(object $payment, int $amount): array
     {
         $orderId = (string) ($payment->provider_reference ?: data_get($payment->metadata, 'kashier_order_id', ''));
         if ($orderId === '') {
@@ -101,7 +101,7 @@ final class KashierGateway implements PaymentGatewayInterface
             ->put('/v3/orders/' . rawurlencode($orderId), [
                 'apiOperation' => 'REFUND',
                 'reason' => 'Customer refund',
-                'transaction' => ['amount' => number_format((float) $payment->amount, 2, '.', '')],
+                'transaction' => ['amount' => number_format((float) $amount, 2, '.', '')],
             ])->throw()->json();
         if (($response['status'] ?? data_get($response, 'response.status')) !== 'SUCCESS') {
             throw new PaymentException('Kashier refund was not accepted.');

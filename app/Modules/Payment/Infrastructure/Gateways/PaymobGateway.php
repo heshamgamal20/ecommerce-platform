@@ -100,7 +100,7 @@ final class PaymobGateway implements PaymentGatewayInterface
         return ['status' => $status, 'provider_reference' => $reference, 'metadata' => ['provider' => 'paymob', 'reconciliation' => $response]];
     }
 
-    public function refundPayment(object $payment): array
+    public function refundPayment(object $payment, int $amount): array
     {
         $transactionId = data_get($payment->metadata, 'transaction_id', $payment->provider_reference);
         if (! $transactionId) {
@@ -110,7 +110,7 @@ final class PaymobGateway implements PaymentGatewayInterface
         $response = $this->client((string) $this->settings->value('paymob', 'secret_key', config('services.paymob.secret_key')))
             ->post('/api/acceptance/void_refund/refund', [
                 'transaction_id' => (int) $transactionId,
-                'amount_cents' => (int) $payment->amount,
+                'amount_cents' => $amount,
             ])->throw()->json();
 
         if (($response['success'] ?? true) !== true) {

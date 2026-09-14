@@ -31,7 +31,7 @@ final class CashOnDeliveryGateway implements PaymentGatewayInterface
         return ['status' => $payment->status === 'confirmed' ? 'confirmed' : 'pending', 'provider_reference' => $payment->provider_reference];
     }
 
-    public function refundPayment(object $payment): array
+    public function refundPayment(object $payment, int $amount): array
     {
         return ['status' => 'refunded', 'metadata' => ['refunded_by' => 'cash_on_delivery']];
     }

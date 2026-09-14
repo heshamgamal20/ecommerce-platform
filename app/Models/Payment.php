@@ -11,13 +11,13 @@ class Payment extends Model
     protected $appends = ['payment_url'];
 
     protected $fillable = [
-        'order_id', 'user_id', 'method', 'provider_reference', 'amount',
+        'order_id', 'user_id', 'method', 'provider_reference', 'amount', 'refunded_amount',
         'currency', 'status', 'idempotency_key', 'metadata',
     ];
 
     protected function casts(): array
     {
-        return ['amount' => 'integer', 'metadata' => 'array'];
+        return ['amount' => 'integer', 'refunded_amount' => 'integer', 'metadata' => 'array'];
     }
 
     public function getPaymentUrlAttribute(): ?string
