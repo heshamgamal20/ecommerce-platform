@@ -27,6 +27,7 @@ POST /api/v1/admin/orders/{orderId}/invoice
 GET /api/v1/admin/orders/{orderId}/invoice
 PATCH /api/v1/admin/invoices/{invoiceId}/cancel
 POST /api/v1/admin/invoices/{invoiceId}/credit-notes
+GET /api/v1/admin/orders/{orderId}/invoice/print
 ```
 
 Credit notes require an `amount` and may reference a return using `return_id`. The API rejects credit notes whose total exceeds the invoice amount and prevents cancellation after a credit note has been issued.

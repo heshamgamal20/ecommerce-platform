@@ -16,6 +16,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('admin/orders/{order}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
     Route::get('admin/orders/{orderId}/invoice', [InvoiceController::class, 'show'])->name('admin.invoices.show');
     Route::post('admin/orders/{orderId}/invoice', [InvoiceController::class, 'issue'])->name('admin.invoices.issue');
+    Route::get('admin/orders/{orderId}/invoice/print', [InvoiceController::class, 'print'])->name('admin.invoices.print');
     Route::patch('admin/invoices/{invoiceId}/cancel', [InvoiceController::class, 'cancel'])->name('admin.invoices.cancel');
     Route::post('admin/invoices/{invoiceId}/credit-notes', [InvoiceController::class, 'creditNote'])->name('admin.invoices.credit-notes.store');
     Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
