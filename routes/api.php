@@ -12,6 +12,7 @@ Route::prefix('v1')->group(function (): void {
     require __DIR__.'/api/orders.php';
     require __DIR__.'/api/payments.php';
     require __DIR__.'/api/shipping.php';
+    require __DIR__.'/api/reports.php';
     require __DIR__.'/api/promotion.php';
     require __DIR__.'/api/staff.php';
     require __DIR__.'/api/settings.php';
