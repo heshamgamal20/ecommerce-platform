@@ -18,6 +18,7 @@ final class AdminReturnController extends Controller
             ->when($filters['q'] ?? null, fn ($query, $q) => $query->where(fn ($inner) => $inner->where('id', is_numeric($q) ? (int) $q : 0)->orWhereHas('order', fn ($order) => $order->where('id', is_numeric($q) ? (int) $q : 0))->orWhereHas('user', fn ($user) => $user->where('name', 'like', '%'.$q.'%')->orWhere('email', 'like', '%'.$q.'%')->orWhere('phone', 'like', '%'.$q.'%'))))
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
             ->when($filters['inspection_status'] ?? null, fn ($query, $status) => $query->where('inspection_status', $status))
+            ->when($filters['reason'] ?? null, fn ($query, $reason) => $query->where('reason', $reason))
             ->when($filters['from'] ?? null, fn ($query, $from) => $query->whereDate('created_at', '>=', $from))
             ->when($filters['to'] ?? null, fn ($query, $to) => $query->whereDate('created_at', '<=', $to))
             ->latest('id')->paginate(min(max((int) ($filters['per_page'] ?? 25), 1), 100));
@@ -26,7 +27,7 @@ final class AdminReturnController extends Controller
 
     public function show(AdminReturnRequest $request, int $return): JsonResponse
     {
-        $item = OrderReturn::query()->with(['order.user:id,name,email,phone', 'order.payments:id,order_id,method,amount,currency,status,provider_reference', 'user:id,name,email,phone', 'receiver:id,name,email', 'inspector:id,name,email', 'items.orderItem'])->findOrFail($return);
+        $item = OrderReturn::query()->with(['order.user:id,name,email,phone', 'order.payments:id,order_id,method,amount,currency,status,provider_reference', 'payment:id,order_id,method,amount,currency,status,provider_reference', 'user:id,name,email,phone', 'receiver:id,name,email', 'inspector:id,name,email', 'items.orderItem'])->findOrFail($return);
         return response()->json(['data' => $item]);
     }
 
@@ -49,7 +50,10 @@ final class AdminReturnController extends Controller
             $item = OrderReturn::query()->lockForUpdate()->findOrFail($return);
             abort_unless($item->received_at !== null && $item->inspection_status === 'pending', 409, 'Return must be received and not previously inspected.');
             abort_unless((int) $data['final_refund_amount'] <= (int) $item->refund_amount, 422, 'Final refund cannot exceed requested refund.');
-            $item->update(['inspection_status' => $data['inspection_status'], 'inspection_notes' => $data['inspection_notes'] ?? $item->inspection_notes, 'final_refund_amount' => $data['final_refund_amount'], 'inspected_at' => now(), 'inspected_by' => $request->user()->id]);
+            if (! empty($data['payment_id'])) {
+                abort_unless((int) optional(\App\Models\Payment::query()->find($data['payment_id']))->order_id === (int) $item->order_id, 422, 'Payment does not belong to this order.');
+            }
+            $item->update(['payment_id' => $data['payment_id'] ?? $item->payment_id, 'inspection_status' => $data['inspection_status'], 'inspection_notes' => $data['inspection_notes'] ?? $item->inspection_notes, 'final_refund_amount' => $data['final_refund_amount'], 'inspected_at' => now(), 'inspected_by' => $request->user()->id]);
             AuditLog::query()->create(['actor_id' => $request->user()->id, 'action' => 'order.return.inspected', 'target_type' => OrderReturn::class, 'target_id' => $item->id, 'metadata' => ['inspection_status' => $data['inspection_status'], 'final_refund_amount' => $data['final_refund_amount']]]);
             return $item->fresh(['items']);
         });

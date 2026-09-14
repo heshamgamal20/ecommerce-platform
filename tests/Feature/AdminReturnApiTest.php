@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\CustomerOrder;
 use App\Models\OrderReturn;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\User;
@@ -23,14 +24,27 @@ final class AdminReturnApiTest extends TestCase
         $product = Product::query()->create(['name' => 'Return Product', 'slug' => 'return-product', 'type' => 'simple', 'status' => 'active', 'price' => 500]);
         $order = CustomerOrder::query()->create(['user_id' => $customer->id, 'status' => 'delivered', 'total_amount' => 500, 'currency' => 'EGP', 'shipping_address' => ['city' => 'Cairo']]);
         $orderItem = $order->items()->create(['product_id' => $product->id, 'name' => $product->name, 'quantity' => 1, 'unit_price' => 500, 'total_amount' => 500]);
+        $payment = Payment::query()->create(['order_id' => $order->id, 'user_id' => $customer->id, 'method' => 'cash_on_delivery', 'amount' => 500, 'currency' => 'EGP', 'status' => 'paid', 'idempotency_key' => 'return-payment-'.$order->id]);
         $return = OrderReturn::query()->create(['order_id' => $order->id, 'user_id' => $customer->id, 'status' => 'approved', 'reason' => 'Damaged', 'refund_amount' => 500]);
         $return->items()->create(['order_item_id' => $orderItem->id, 'product_id' => $product->id, 'quantity' => 1, 'unit_price' => 500]);
 
         $this->actingAs($admin)->getJson('/api/v1/admin/returns?status=approved')->assertOk()->assertJsonPath('data.data.0.id', $return->id);
         $this->actingAs($admin)->postJson('/api/v1/admin/returns/'.$return->id.'/receive', ['notes' => 'Package received'])->assertOk()->assertJsonPath('data.received_by', $admin->id);
-        $this->actingAs($admin)->postJson('/api/v1/admin/returns/'.$return->id.'/inspect', ['inspection_status' => 'passed', 'inspection_notes' => 'Good condition', 'final_refund_amount' => 450])->assertOk()->assertJsonPath('data.inspection_status', 'passed')->assertJsonPath('data.final_refund_amount', 450);
+        $this->actingAs($admin)->postJson('/api/v1/admin/returns/'.$return->id.'/inspect', ['inspection_status' => 'passed', 'inspection_notes' => 'Good condition', 'final_refund_amount' => 450, 'payment_id' => $payment->id])->assertOk()->assertJsonPath('data.inspection_status', 'passed')->assertJsonPath('data.final_refund_amount', 450)->assertJsonPath('data.payment_id', $payment->id);
         $this->assertDatabaseHas('audit_logs', ['action' => 'order.return.received', 'target_id' => $return->id]);
         $this->assertDatabaseHas('audit_logs', ['action' => 'order.return.inspected', 'target_id' => $return->id]);
+    }
+
+    public function test_rejection_is_audited(): void
+    {
+        $this->seed(RbacSeeder::class);
+        $admin = $this->userWithRole('admin');
+        $customer = $this->userWithRole('customer');
+        $order = CustomerOrder::query()->create(['user_id' => $customer->id, 'status' => 'delivered', 'total_amount' => 100, 'currency' => 'EGP', 'shipping_address' => ['city' => 'Cairo']]);
+        $return = OrderReturn::query()->create(['order_id' => $order->id, 'user_id' => $customer->id, 'status' => 'pending', 'reason' => 'Other', 'refund_amount' => 100]);
+
+        $this->actingAs($admin)->patchJson('/api/v1/returns/'.$return->id.'/reject', ['reason' => 'Outside return window'])->assertOk()->assertJsonPath('data.status', 'rejected');
+        $this->assertDatabaseHas('audit_logs', ['action' => 'order.return.rejected', 'target_id' => $return->id]);
     }
 
     public function test_customer_cannot_access_admin_returns(): void
